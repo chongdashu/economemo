@@ -39,7 +39,7 @@ app.dependency_overrides[get_db] = override_get_db
 def setup_database():
     Base.metadata.create_all(bind=engine)
     yield
-    # Base.metadata.drop_all(bind=engine) # don't clear the last run
+    Base.metadata.drop_all(bind=engine)  # don't clear the last run
 
 
 @pytest.fixture(scope="module")
