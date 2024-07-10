@@ -1,6 +1,9 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
-from .db import Base
 from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
+
+from .db import Base
+
 
 class Article(Base):
     __tablename__ = "articles"

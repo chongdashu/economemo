@@ -1,0 +1,11 @@
+{
+    "python.formatting.provider": "ruff",
+    "editor.formatOnSave": true,
+    "python.linting.enabled": true,
+    "python.linting.ruffEnabled": true,
+    "python.linting.ruffArgs": ["--config", "pyproject.toml"],
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  }
+  

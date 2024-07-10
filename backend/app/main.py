@@ -1,19 +1,23 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from .db import engine, SessionLocal, database
-from .models import Base, Article
-from pydantic import BaseModel
-from typing import List
 from datetime import datetime
+from typing import List
+
+from fastapi import Depends, FastAPI
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from .db import SessionLocal, database, engine
+from .models import Article, Base
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+
 class ArticleCreate(BaseModel):
     url: str
     read: bool = False
     date_read: datetime = datetime.utcnow()
+
 
 class ArticleResponse(BaseModel):
     id: int
@@ -24,6 +28,7 @@ class ArticleResponse(BaseModel):
     class Config:
         orm_mode = True
 
+
 def get_db():
     db = SessionLocal()
     try:
@@ -31,13 +36,16 @@ def get_db():
     finally:
         db.close()
 
+
 @app.on_event("startup")
 async def startup():
     await database.connect()
 
+
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
+
 
 @app.post("/articles/", response_model=ArticleResponse)
 def create_article(article: ArticleCreate, db: Session = Depends(get_db)):
@@ -46,6 +54,7 @@ def create_article(article: ArticleCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_article)
     return db_article
+
 
 @app.get("/articles/", response_model=List[ArticleResponse])
 def read_articles(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
