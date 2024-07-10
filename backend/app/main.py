@@ -1,14 +1,19 @@
 from datetime import datetime
 from typing import List
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from .db import SessionLocal, database, engine
-from .models import Article, Base
+from .models import Article, Base, User
 
-Base.metadata.create_all(bind=engine)
+
+# Recreate the database tables
+def recreate_database():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI()
 
@@ -29,6 +34,21 @@ class ArticleResponse(BaseModel):
         orm_mode = True
 
 
+class UserCreate(BaseModel):
+    username: str
+    email: str
+
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    articles: List[ArticleResponse] = []
+
+    class Config:
+        orm_mode = True
+
+
 def get_db():
     db = SessionLocal()
     try:
@@ -39,12 +59,22 @@ def get_db():
 
 @app.on_event("startup")
 async def startup():
+    recreate_database()
     await database.connect()
 
 
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
+
+
+@app.post("/users/", response_model=UserResponse)
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = User(**user.dict())
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
 
 
 @app.post("/articles/", response_model=ArticleResponse)
@@ -56,7 +86,25 @@ def create_article(article: ArticleCreate, db: Session = Depends(get_db)):
     return db_article
 
 
-@app.get("/articles/", response_model=List[ArticleResponse])
+@app.post("/users/{user_id}/articles/{article_id}/", response_model=UserResponse)
+def associate_user_article(user_id: int, article_id: int, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.id == user_id).first()
+    db_article = db.query(Article).filter(Article.id == article_id).first()
+    if db_user is None or db_article is None:
+        raise HTTPException(status_code=404, detail="User or Article not found")
+    db_user.articles.append(db_article)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+@app.get("/users/", response_model=list[UserResponse])
+def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    users = db.query(User).offset(skip).limit(limit).all()
+    return users
+
+
+@app.get("/articles/", response_model=list[ArticleResponse])
 def read_articles(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     articles = db.query(Article).offset(skip).limit(limit).all()
     return articles
