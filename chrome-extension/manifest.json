@@ -1,0 +1,27 @@
+{
+    "manifest_version": 3,
+    "name": "Economemo - Article Tracker",
+    "version": "0.1",
+    "description": "Track read/unread status of Economist articles.",
+    "permissions": [
+      "activeTab",
+      "storage"
+    ],
+    "host_permissions": [
+        "https://*.economist.com/*",
+        "http://localhost:8000/*" 
+     ],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://www.economist.com/*"],
+        "js": ["content.js"]
+      }
+    ],
+    "action": {
+      "default_popup": "popup.html"
+    }
+  }
+  
