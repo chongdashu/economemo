@@ -23,19 +23,29 @@ async function updateReadStatus(articleUrl, status) {
 
 // Function to create the button and attach it to the page
 function createButton(articleUrl, readStatus) {
+    // Check if the button already exists
+    if (document.querySelector('#mark-as-read-button')) {
+        return;
+    }
+
     const button = document.createElement('button');
+    button.id = 'mark-as-read-button'; // Set an ID to ensure uniqueness
     button.className = 'ds-actioned-link ds-actioned-link--minor'; // Mimic existing button classes
     button.style.marginLeft = '10px';
-    button.style.padding = '5px 10px';
-    button.style.border = '1px solid #ccc';
-    button.style.borderRadius = '5px';
-    button.style.backgroundColor = 'white';
-    button.style.color = '#007bff';
+    button.style.padding = '0 12px';
+    button.style.border = 'none';
+    button.style.backgroundColor = 'transparent';
+    button.style.color = '#0056b3';
     button.style.cursor = 'pointer';
-    button.style.fontSize = '14px';
+    button.style.fontSize = '16px';
+    button.style.fontFamily = 'Economist, sans-serif';
     button.style.display = 'inline-flex';
     button.style.alignItems = 'center';
     button.style.justifyContent = 'center';
+    button.style.height = '32px';
+    button.style.lineHeight = '32px';
+    button.style.borderRadius = '4px';
+    button.style.textDecoration = 'none';
 
     function setButtonState() {
         if (readStatus && readStatus.read) {
