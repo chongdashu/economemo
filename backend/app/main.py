@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,17 @@ def recreate_database():
 
 
 app = FastAPI()
+
+# Allow CORS for the Economist website
+origins = ["https://www.economist.com"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class ArticleCreate(BaseModel):
