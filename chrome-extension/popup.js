@@ -5,7 +5,7 @@ document.getElementById('markUnread').addEventListener('click', () => {
             target: { tabId: tab.id },
             function: () => {
                 const articleUrl = window.location.href;
-                fetch('http://localhost:8000/articles', {
+                fetch('https://127.0.0.1:8000/articles', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -28,7 +28,7 @@ document.getElementById('markRead').addEventListener('click', () => {
             target: { tabId: tab.id },
             function: () => {
                 const articleUrl = window.location.href;
-                fetch('http://localhost:8000/articles', {
+                fetch('https://127.0.0.1:8000/articles', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
