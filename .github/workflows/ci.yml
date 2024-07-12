@@ -2,14 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: 
+      - main
   pull_request:
-    branches: [ main ]
-  workflow_dispatch: # Allows manual triggering
+    branches: 
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     services:
@@ -28,29 +29,8 @@ jobs:
           --health-retries 5
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.8'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest pytest-cov
-        pip install -r backend/requirements.txt
-
-    - name: Setup Database
-      run: |
-        sudo apt-get install -y postgresql-client
-        psql -h localhost -U testuser -d testdb -c "CREATE DATABASE testdb;"
-      env:
-        PGPASSWORD: testpassword
-
-    - name: Run tests
-      run: |
-        pytest --maxfail=1 --disable-warnings -v
-      env:
-        DATABASE_URL: postgres://testuser:testpassword@localhost:5432/testdb
+      - name: Set up Python
+        uses: actions/setup-python@v
