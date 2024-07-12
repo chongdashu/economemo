@@ -110,13 +110,21 @@ def associate_user_article(user_id: int, article_id: int, db: Session = Depends(
     return db_user
 
 
-@app.get("/users/", response_model=list[UserResponse])
+@app.get("/users/", response_model=List[UserResponse])
 def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     users = db.query(User).offset(skip).limit(limit).all()
     return users
 
 
-@app.get("/articles/", response_model=list[ArticleResponse])
+@app.get("/articles/", response_model=List[ArticleResponse])
 def read_articles(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     articles = db.query(Article).offset(skip).limit(limit).all()
+    return articles
+
+
+@app.get("/articles/by-url", response_model=List[ArticleResponse])
+def read_article_by_url(url: str, db: Session = Depends(get_db)):
+    articles = db.query(Article).filter(Article.url == url).all()
+    if not articles:
+        raise HTTPException(status_code=404, detail="Article not found")
     return articles
