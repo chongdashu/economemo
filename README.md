@@ -2,6 +2,8 @@
 
 An application to track what articles have been read on the economist.
 
+[![CI](https://github.com/chongdashu/economemo/actions/workflows/ci.yml/badge.svg)](https://github.com/chongdashu/economemo/actions/workflows/ci.yml)
+
 # Setup
 
 ## Fresh installation and configuration
