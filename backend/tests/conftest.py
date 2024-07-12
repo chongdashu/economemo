@@ -17,7 +17,7 @@ POSTGRES_DB = os.getenv("POSTGRES_DB")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST")
 
 # Construct the DATABASE_URL
-DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/test_{POSTGRES_DB}"  # note the test_
+DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/test_{POSTGRES_DB}"  # note the test_ prefix
 
 # Create the database engine
 engine = create_engine(DATABASE_URL)
