@@ -16,13 +16,13 @@ jobs:
       postgres:
         image: postgres:latest
         env:
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpassword
-          POSTGRES_DB: testdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: postgres
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U testuser"
+          --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -45,10 +45,12 @@ jobs:
     - name: Setup Database
       run: |
         sudo apt-get install -y postgresql-client
-        psql -h localhost -U testuser -c "DROP DATABASE IF EXISTS testdb;"
-        psql -h localhost -U testuser -c "CREATE DATABASE testdb;"
+        psql -h localhost -U postgres -c "CREATE USER testuser WITH PASSWORD 'testpassword';"
+        psql -h localhost -U postgres -c "ALTER USER testuser WITH SUPERUSER;"
+        psql -h localhost -U postgres -c "DROP DATABASE IF EXISTS testdb;"
+        psql -h localhost -U postgres -c "CREATE DATABASE testdb OWNER testuser;"
       env:
-        PGPASSWORD: testpassword
+        PGPASSWORD: postgrespassword
 
     - name: Run tests
       run: |
