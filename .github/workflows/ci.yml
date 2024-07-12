@@ -34,7 +34,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.8'
+        python-version: '3.11'
 
     - name: Install dependencies
       run: |
@@ -46,10 +46,8 @@ jobs:
     - name: Setup Database
       run: |
         sudo apt-get install -y postgresql-client
-        PGPASSWORD=postgrespassword psql -h localhost -U postgres -c "CREATE USER testuser WITH PASSWORD 'testpassword';"
-        PGPASSWORD=postgrespassword psql -h localhost -U postgres -c "ALTER USER testuser WITH SUPERUSER;"
         PGPASSWORD=postgrespassword psql -h localhost -U postgres -c "DROP DATABASE IF EXISTS testdb;"
-        PGPASSWORD=postgrespassword psql -h localhost -U postgres -c "CREATE DATABASE testdb OWNER testuser;"
+        PGPASSWORD=postgrespassword psql -h localhost -U postgres -c "CREATE DATABASE testdb OWNER postgres;"
       env:
         PGPASSWORD: postgrespassword
 
@@ -57,8 +55,8 @@ jobs:
       run: |
         pytest --maxfail=1 --disable-warnings -v
       env:
-        POSTGRES_USER: testuser
-        POSTGRES_PASSWORD: testpassword
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgrespassword
         POSTGRES_DB: testdb
         POSTGRES_HOST: localhost
-        DATABASE_URL: postgres://testuser:testpassword@localhost:5432/testdb
+        DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/testdb
