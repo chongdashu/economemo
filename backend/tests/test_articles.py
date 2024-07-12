@@ -1,15 +1,3 @@
-import pytest
-
-
-def test_create_user(client):
-    response = client.post(
-        "/users/", json={"username": "testuser", "email": "testuser@example.com"}
-    )
-    assert response.status_code == 200
-    assert response.json()["username"] == "testuser"
-    assert response.json()["email"] == "testuser@example.com"
-
-
 def test_create_article(client):
     response = client.post(
         "/articles/",
@@ -45,13 +33,24 @@ def test_associate_user_article(client):
     assert any(article["id"] == article_id for article in response.json()["articles"])
 
 
-def test_read_users(client):
-    response = client.get("/users/")
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
-
-
 def test_read_articles(client):
     response = client.get("/articles/")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+
+def test_read_article_by_url(client):
+    response = client.post(
+        "/articles/",
+        json={
+            "url": "http://example3.com",
+            "read": False,
+            "date_read": "2023-12-01T00:00:00Z",
+        },
+    )
+    assert response.status_code == 200
+
+    response = client.get("/articles/by-url?url=http://example3.com")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+    assert response.json()[0]["url"] == "http://example3.com"
