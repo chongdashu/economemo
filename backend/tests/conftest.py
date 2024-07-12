@@ -7,7 +7,7 @@ from app.main import app, get_db
 from app.db import Base
 from dotenv import load_dotenv
 
-# Load environment variables from .env.test file
+# Load environment variables from .env file
 load_dotenv()
 
 # Set necessary environment variables
@@ -17,7 +17,9 @@ POSTGRES_DB = os.getenv("POSTGRES_DB")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST")
 
 # Construct the DATABASE_URL
-DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/test_{POSTGRES_DB}"  # note the test_ prefix
+DATABASE_URL = (
+    f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DB}"
+)
 
 # Create the database engine
 engine = create_engine(DATABASE_URL)
