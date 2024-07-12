@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Economemo: Article Tracker</title>
-  <style>
-    body { font-family: Arial, sans-serif; }
-    button { margin-top: 10px; }
-  </style>
+    <title>Economemo: Article Tracker</title>
+    <style>
+        #status {
+            margin-top: 10px;
+        }
+        button {
+            margin-top: 5px;
+        }
+    </style>
 </head>
 <body>
-  <h1>Economemo: Article Tracker</h1>
-  <button id="markUnread">Mark as Unread</button>
-  <button id="markRead">Mark as Read</button>
-  <script src="popup.js"></script>
+    <h1>Economemo: Article Tracker</h1>
+    <div id="status">Loading...</div>
+    <button id="toggleReadStatus" style="display: none;"></button>
+    <script src="popup.js"></script>
 </body>
 </html>

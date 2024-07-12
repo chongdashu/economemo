@@ -19,7 +19,11 @@ def recreate_database():
 app = FastAPI()
 
 # Allow CORS for the Economist website
-origins = ["https://www.economist.com"]
+origins = [
+    "https://www.economist.com",
+    "chrome-extension://kecpficpeakaepppkojkcgffmlcpgmlj",
+    "https://127.0.0.1:8000",
+]
 
 app.add_middleware(
     CORSMiddleware,
