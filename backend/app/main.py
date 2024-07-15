@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Cookie, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -51,13 +51,11 @@ class ArticleResponse(BaseModel):
 
 
 class UserCreate(BaseModel):
-    username: str
     email: str
 
 
 class UserResponse(BaseModel):
-    id: int
-    username: str
+    id: str
     email: str
     articles: List[ArticleResponse] = []
 
@@ -86,49 +84,31 @@ async def shutdown():
 
 @app.post("/users/", response_model=UserResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = User(**user.dict())
+    db_user = User(email=user.email)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
 
 
+@app.post("/login/", response_model=UserResponse)
+def login(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user.email).first()
+    if not db_user:
+        raise HTTPException(status_code=400, detail="User not found")
+    return db_user
+
+
 @app.post("/articles/", response_model=ArticleResponse)
-def create_article(article: ArticleCreate, db: Session = Depends(get_db)):
-    db_article = Article(**article.dict())
+def create_article(article: ArticleCreate, user_id: str = Cookie(None), db: Session = Depends(get_db)):
+    db_article = Article(**article.dict(), user_id=user_id)
     db.add(db_article)
     db.commit()
     db.refresh(db_article)
     return db_article
 
 
-@app.post("/users/{user_id}/articles/{article_id}/", response_model=UserResponse)
-def associate_user_article(user_id: int, article_id: int, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.id == user_id).first()
-    db_article = db.query(Article).filter(Article.id == article_id).first()
-    if db_user is None or db_article is None:
-        raise HTTPException(status_code=404, detail="User or Article not found")
-    db_user.articles.append(db_article)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
-
-
-@app.get("/users/", response_model=List[UserResponse])
-def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
-
-
 @app.get("/articles/", response_model=List[ArticleResponse])
-def read_articles(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    articles = db.query(Article).offset(skip).limit(limit).all()
-    return articles
-
-
-@app.get("/articles/by-url", response_model=List[ArticleResponse])
-def read_article_by_url(url: str, db: Session = Depends(get_db)):
-    articles = db.query(Article).filter(Article.url == url).all()
-    if not articles:
-        raise HTTPException(status_code=404, detail="Article not found")
+def read_articles(user_id: str = Cookie(None), db: Session = Depends(get_db)):
+    articles = db.query(Article).filter(Article.user_id == user_id).all()
     return articles
