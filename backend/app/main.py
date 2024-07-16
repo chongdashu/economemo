@@ -45,13 +45,13 @@ class ArticleResponse(BaseModel):
 
 
 class UserCreate(BaseModel):
-    email: str = None
+    email: str | None = None
     uuid: str = None
 
 
 class UserResponse(BaseModel):
     id: str
-    email: str = None
+    email: str | None = None
     articles: List[ArticleResponse] = []
 
     class Config:
