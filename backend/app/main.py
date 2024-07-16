@@ -1,27 +1,21 @@
+from fastapi import FastAPI, Depends, HTTPException, Header, Query
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from .db import SessionLocal, engine, database
+from .models import Base, User, Article
+from pydantic import BaseModel
 from datetime import datetime
 from typing import List
+import uuid
 
-from fastapi import Cookie, Depends, FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-
-from .db import SessionLocal, database, engine
-from .models import Article, Base, User
-
-
-# Recreate the database tables
-def recreate_database():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# Allow CORS for the Economist website
+# Allow CORS for the Chrome extension and the Economist website
 origins = [
-    "https://www.economist.com",
     "chrome-extension://kecpficpeakaepppkojkcgffmlcpgmlj",
+    "https://www.economist.com",
     "https://127.0.0.1:8000",
 ]
 
@@ -51,12 +45,13 @@ class ArticleResponse(BaseModel):
 
 
 class UserCreate(BaseModel):
-    email: str
+    email: str = None
+    uuid: str = None
 
 
 class UserResponse(BaseModel):
     id: str
-    email: str
+    email: str = None
     articles: List[ArticleResponse] = []
 
     class Config:
@@ -71,20 +66,9 @@ def get_db():
         db.close()
 
 
-@app.on_event("startup")
-async def startup():
-    recreate_database()
-    await database.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    await database.disconnect()
-
-
 @app.post("/users/", response_model=UserResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = User(email=user.email)
+    db_user = User(email=user.email) if user.email else User(id=user.uuid)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -100,7 +84,14 @@ def login(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @app.post("/articles/", response_model=ArticleResponse)
-def create_article(article: ArticleCreate, user_id: str = Cookie(None), db: Session = Depends(get_db)):
+def create_article(
+    article: ArticleCreate,
+    user_id: str = Header(None, alias="User-Id"),
+    db: Session = Depends(get_db),
+):
+    print(f"create_article: user_id={user_id}")
+    if user_id is None:
+        raise HTTPException(status_code=400, detail="User ID is required")
     db_article = Article(**article.dict(), user_id=user_id)
     db.add(db_article)
     db.commit()
@@ -109,6 +100,35 @@ def create_article(article: ArticleCreate, user_id: str = Cookie(None), db: Sess
 
 
 @app.get("/articles/", response_model=List[ArticleResponse])
-def read_articles(user_id: str = Cookie(None), db: Session = Depends(get_db)):
+def read_articles(
+    user_id: str = Header(None, alias="User-Id"),
+    db: Session = Depends(get_db),
+):
+    print(f"read_articles: user_id={user_id}")
+    if user_id is None:
+        raise HTTPException(status_code=400, detail="User ID is required")
     articles = db.query(Article).filter(Article.user_id == user_id).all()
     return articles
+
+
+@app.get("/articles/by-url", response_model=List[ArticleResponse])
+def read_article_by_url(
+    url: str = Query(...),
+    user_id: str = Header(None, alias="User-Id"),
+    db: Session = Depends(get_db),
+):
+    print(url, user_id)
+    if user_id is None:
+        raise HTTPException(status_code=400, detail="User ID is required")
+    articles = db.query(Article).filter(Article.url == url, Article.user_id == user_id).all()
+    return articles
+
+
+@app.on_event("startup")
+async def startup():
+    await database.connect()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await database.disconnect()

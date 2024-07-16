@@ -1,6 +1,13 @@
 // Function to check the article's read status
-async function checkReadStatus(articleUrl) {
-    const response = await fetch(`https://127.0.0.1:8000/articles/by-url?url=${encodeURIComponent(articleUrl)}`);
+async function checkReadStatus(articleUrl, userId) {
+    console.log(`Checking read status for ${articleUrl} with user_id ${userId}`);
+    const response = await fetch(`https://127.0.0.1:8000/articles/by-url?url=${encodeURIComponent(articleUrl)}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'User-Id': userId
+        }
+    });
     if (!response.ok) {
         console.error('Article not found');
         return null;
@@ -10,11 +17,13 @@ async function checkReadStatus(articleUrl) {
 }
 
 // Function to update the article's read status
-async function updateReadStatus(articleUrl, status) {
+async function updateReadStatus(articleUrl, status, userId) {
+    console.log(`Updating read status for ${articleUrl} to ${status} with user_id ${userId}`);
     const response = await fetch('https://127.0.0.1:8000/articles', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'User-Id': userId
         },
         body: JSON.stringify({
             url: articleUrl,
@@ -26,7 +35,7 @@ async function updateReadStatus(articleUrl, status) {
 }
 
 // Function to create the button and attach it to the page
-function createButton(articleUrl) {
+function createButton(articleUrl, userId) {
     // Check if the button already exists
     if (document.querySelector('#mark-as-read-button')) {
         return;
@@ -62,12 +71,12 @@ function createButton(articleUrl) {
     };
 
     async function setButtonState() {
-        const readStatus = await checkReadStatus(articleUrl);
+        const readStatus = await checkReadStatus(articleUrl, userId);
         if (readStatus && readStatus.read) {
             button.textContent = `Read on ${new Date(readStatus.date_read).toLocaleDateString()}`;
             button.onclick = () => {
                 if (confirm('Do you want to mark this article as unread?')) {
-                    updateReadStatus(articleUrl, false).then(() => {
+                    updateReadStatus(articleUrl, false, userId).then(() => {
                         setButtonState();
                     });
                 }
@@ -75,7 +84,7 @@ function createButton(articleUrl) {
         } else {
             button.textContent = 'Mark as Read';
             button.onclick = () => {
-                updateReadStatus(articleUrl, true).then(() => {
+                updateReadStatus(articleUrl, true, userId).then(() => {
                     setButtonState();
                 });
             };
@@ -99,13 +108,13 @@ function createButton(articleUrl) {
 }
 
 // Function to observe DOM changes and initialize the button
-function observeDOM() {
+function observeDOM(userId) {
     const observer = new MutationObserver(async (mutations, observer) => {
         const saveButton = document.querySelector('button[aria-label="Save"]');
         const existingButton = document.querySelector('#mark-as-read-button');
         if (saveButton && !existingButton) {
             const articleUrl = window.location.href;
-            createButton(articleUrl);
+            createButton(articleUrl, userId);
         }
         // Keep observing until the button is found and added
     });
@@ -113,5 +122,33 @@ function observeDOM() {
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// Run the main function when the content script is loaded
-observeDOM();
+// Initialization code
+function myInitCode() {
+    console.warn("ASDHASDASDA");
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+        userId = crypto.randomUUID();
+        localStorage.setItem('userId', userId);
+        fetch('https://127.0.0.1:8000/users/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ uuid: userId })
+        }).then(() => {
+            observeDOM(userId);
+        });
+    } else {
+        observeDOM(userId);
+    }
+}
+
+if (document.readyState !== 'loading') {
+    console.log('document is already ready, just execute code here');
+    myInitCode();
+} else {
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('document was not ready, place code here');
+        myInitCode();
+    });
+}

@@ -6,7 +6,7 @@
         #status {
             margin-top: 10px;
         }
-        button {
+        button, input {
             margin-top: 5px;
         }
     </style>
@@ -15,6 +15,11 @@
     <h1>Economemo: Article Tracker</h1>
     <div id="status">Loading...</div>
     <button id="toggleReadStatus" style="display: none;"></button>
+    <div id="loginForm">
+        <input type="email" id="email" placeholder="Enter your email" />
+        <button id="loginButton">Login</button>
+        <button id="registerButton">Register</button>
+    </div>
     <script src="popup.js"></script>
 </body>
 </html>
