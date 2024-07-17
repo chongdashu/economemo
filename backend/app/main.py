@@ -5,8 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .api import ArticleCreate, ArticleResponse, ArticleUpdate, UserCreate, UserResponse
-from .models import Article, Base, User
 from .db import SessionLocal, database, engine
+from .models import Article, Base, User
 
 Base.metadata.create_all(bind=engine)
 
