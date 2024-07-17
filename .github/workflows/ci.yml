@@ -64,8 +64,8 @@ jobs:
         DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/testdb
     
     - name: Run mypy
-      run: mypy .
+      run: mypy ./backend
   
     - name: Run linting
       run: |
-        ruff .
+        ruff check ./backend
