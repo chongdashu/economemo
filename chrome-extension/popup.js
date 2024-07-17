@@ -2,22 +2,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let userId = localStorage.getItem('userId');
     let userEmail = localStorage.getItem('userEmail');
     const statusElement = document.getElementById('status');
-    const registerForm = document.getElementById('register-form');
-    const loginForm = document.getElementById('login-form');
+    const emailForm = document.getElementById('email-form');
+    const emailInput = document.getElementById('email-input');
+    const registerButton = document.getElementById('register-button');
+    const loginButton = document.getElementById('login-button');
+    const logoutButton = document.getElementById('logout-button');
     const articleStatusElement = document.getElementById('article-status');
     const actionButton = document.getElementById('action-button');
-    const logoutButton = document.getElementById('logout-button');
+    const errorMessageElement = document.getElementById('error-message');
 
     // Check login status
     if (userEmail) {
         statusElement.textContent = `Logged in as ${userEmail}`;
-        registerForm.style.display = 'none';
-        loginForm.style.display = 'none';
+        emailForm.style.display = 'none';
         logoutButton.style.display = 'block';
     } else {
         statusElement.textContent = "Not logged in. Create an account or log in to sync your read articles across devices.";
-        registerForm.style.display = 'block';
-        loginForm.style.display = 'block';
+        emailForm.style.display = 'block';
         logoutButton.style.display = 'none';
     }
 
@@ -93,59 +94,73 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Register a new user
-    registerForm.onsubmit = async (e) => {
+    // Handle register
+    registerButton.onclick = async (e) => {
         e.preventDefault();
-        const email = document.getElementById('register-email').value;
-        const response = await fetch('https://127.0.0.1:8000/users/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email })
-        });
+        errorMessageElement.textContent = ''; // Clear any previous error messages
+        const email = emailInput.value;
 
-        if (response.ok) {
+        try {
+            const response = await fetch('https://127.0.0.1:8000/users/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText);
+            }
+
             const data = await response.json();
             userId = data.id;
             userEmail = data.email;
             localStorage.setItem('userId', userId);
             localStorage.setItem('userEmail', userEmail);
             statusElement.textContent = `Logged in as ${userEmail}`;
-            registerForm.style.display = 'none';
-            loginForm.style.display = 'none';
+            emailForm.style.display = 'none';
             logoutButton.style.display = 'block';
             checkReadStatus(window.location.href); // Refresh the read status after logging in
-        } else {
-            console.error('Failed to register');
+        } catch (error) {
+            errorMessageElement.textContent = `Error: ${error.message}`;
+            errorMessageElement.style.color = 'red';
         }
     };
 
-    // Log in an existing user
-    loginForm.onsubmit = async (e) => {
+    // Handle login
+    loginButton.onclick = async (e) => {
         e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const response = await fetch('https://127.0.0.1:8000/login/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email })
-        });
+        errorMessageElement.textContent = ''; // Clear any previous error messages
+        const email = emailInput.value;
 
-        if (response.ok) {
+        try {
+            const response = await fetch('https://127.0.0.1:8000/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText);
+            }
+
             const data = await response.json();
             userId = data.id;
             userEmail = data.email;
             localStorage.setItem('userId', userId);
             localStorage.setItem('userEmail', userEmail);
             statusElement.textContent = `Logged in as ${userEmail}`;
-            registerForm.style.display = 'none';
-            loginForm.style.display = 'none';
+            emailForm.style.display = 'none';
             logoutButton.style.display = 'block';
             checkReadStatus(window.location.href); // Refresh the read status after logging in
-        } else {
-            console.error('Failed to log in');
+        } catch (error) {
+            errorMessageElement.textContent = `Error: ${error.message}`;
+            errorMessageElement.style.color = 'red';
         }
     };
 
@@ -154,8 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('userId');
         localStorage.removeItem('userEmail');
         statusElement.textContent = "Not logged in. Create an account or log in to sync your read articles across devices.";
-        registerForm.style.display = 'block';
-        loginForm.style.display = 'block';
+        emailForm.style.display = 'block';
         logoutButton.style.display = 'none';
         userId = null;
         userEmail = null;
