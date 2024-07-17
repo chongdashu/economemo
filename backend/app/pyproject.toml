@@ -2,5 +2,7 @@
 line-length = 120
 lint.select = ["E", "F", "I"]
 
+lint.extend-select = ["I"]
+
 [tool.isort]
 profile = "black"
