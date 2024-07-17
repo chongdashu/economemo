@@ -1,6 +1,10 @@
 // Function to check the article's read status
-async function checkReadStatus(articleUrl) {
-    const response = await fetch(`https://127.0.0.1:8000/articles/by-url?url=${encodeURIComponent(articleUrl)}`);
+async function checkReadStatus(articleUrl, userId) {
+    const response = await fetch(`https://127.0.0.1:8000/articles/by-url?url=${encodeURIComponent(articleUrl)}`, {
+        headers: {
+            'User-Id': userId
+        }
+    });
     if (!response.ok) {
         console.error('Article not found');
         return null;
@@ -9,24 +13,41 @@ async function checkReadStatus(articleUrl) {
     return data.length > 0 ? data[0] : null;
 }
 
-// Function to update the article's read status
-async function updateReadStatus(articleUrl, status) {
-    const response = await fetch('https://127.0.0.1:8000/articles', {
+// Function to create a new article
+async function createArticle(articleUrl, userId) {
+    const response = await fetch('https://127.0.0.1:8000/articles/', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'User-Id': userId
         },
         body: JSON.stringify({
             url: articleUrl,
-            read: status,
-            date_read: status ? new Date().toISOString() : null
+            read: true,
+            date_read: new Date().toISOString()
+        })
+    });
+    return response.json();
+}
+
+// Function to update the article's read status
+async function updateArticle(articleId, readStatus, userId) {
+    const response = await fetch(`https://127.0.0.1:8000/articles/${articleId}/`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'User-Id': userId
+        },
+        body: JSON.stringify({
+            read: readStatus,
+            date_read: readStatus ? new Date().toISOString() : null
         })
     });
     return response.json();
 }
 
 // Function to create the button and attach it to the page
-function createButton(articleUrl) {
+function createButton(articleUrl, userId) {
     // Check if the button already exists
     if (document.querySelector('#mark-as-read-button')) {
         return;
@@ -62,20 +83,27 @@ function createButton(articleUrl) {
     };
 
     async function setButtonState() {
-        const readStatus = await checkReadStatus(articleUrl);
+        const readStatus = await checkReadStatus(articleUrl, userId);
         if (readStatus && readStatus.read) {
             button.textContent = `Read on ${new Date(readStatus.date_read).toLocaleDateString()}`;
             button.onclick = () => {
                 if (confirm('Do you want to mark this article as unread?')) {
-                    updateReadStatus(articleUrl, false).then(() => {
+                    updateArticle(readStatus.id, false, userId).then(() => {
                         setButtonState();
                     });
                 }
             };
+        } else if (readStatus && !readStatus.read) {
+            button.textContent = 'Mark as Read';
+            button.onclick = () => {
+                updateArticle(readStatus.id, true, userId).then(() => {
+                    setButtonState();
+                });
+            };
         } else {
             button.textContent = 'Mark as Read';
             button.onclick = () => {
-                updateReadStatus(articleUrl, true).then(() => {
+                createArticle(articleUrl, userId).then(() => {
                     setButtonState();
                 });
             };
@@ -105,7 +133,19 @@ function observeDOM() {
         const existingButton = document.querySelector('#mark-as-read-button');
         if (saveButton && !existingButton) {
             const articleUrl = window.location.href;
-            createButton(articleUrl);
+            let userId = localStorage.getItem('userId');
+            if (!userId) {
+                userId = crypto.randomUUID();
+                localStorage.setItem('userId', userId);
+                fetch('https://127.0.0.1:8000/users/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ uuid: userId })
+                });
+            }
+            createButton(articleUrl, userId);
         }
         // Keep observing until the button is found and added
     });
@@ -114,4 +154,8 @@ function observeDOM() {
 }
 
 // Run the main function when the content script is loaded
-observeDOM();
+if (document.readyState !== 'loading') {
+    observeDOM();
+} else {
+    document.addEventListener('DOMContentLoaded', observeDOM);
+}
