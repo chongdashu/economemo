@@ -1,25 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Economemo: Article Tracker</title>
+    <title>Economemo</title>
     <style>
-        #status {
-            margin-top: 10px;
-        }
-        button, input {
-            margin-top: 5px;
-        }
+        body { font-family: Arial, sans-serif; }
+        #status { margin-bottom: 10px; }
+        #register-form, #login-form { margin-bottom: 10px; }
+        #action-button { margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
-    <h1>Economemo: Article Tracker</h1>
-    <div id="status">Loading...</div>
-    <button id="toggleReadStatus" style="display: none;"></button>
-    <div id="loginForm">
-        <input type="email" id="email" placeholder="Enter your email" />
-        <button id="loginButton">Login</button>
-        <button id="registerButton">Register</button>
-    </div>
+    <div id="status"></div>
+    <form id="register-form">
+        <input type="email" id="register-email" placeholder="Register email" required />
+        <button type="submit">Register</button>
+    </form>
+    <form id="login-form">
+        <input type="email" id="login-email" placeholder="Login email" required />
+        <button type="submit">Login</button>
+    </form>
+    <button id="logout-button" style="display: none;">Logout</button>
+    <div id="article-status"></div>
+    <button id="action-button"></button>
     <script src="popup.js"></script>
 </body>
 </html>
