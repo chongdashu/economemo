@@ -90,7 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.ok) {
             checkReadStatus(articleUrl);
         } else {
-            console.error('Failed to update read status');
+            const errorText = await response.text();
+            errorMessageElement.textContent = `Error: ${errorText}`;
+            errorMessageElement.style.color = 'red';
+            console.error('Failed to update read status:', errorText);
         }
     }
 

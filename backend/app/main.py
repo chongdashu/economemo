@@ -31,7 +31,7 @@ app.add_middleware(
 class ArticleCreate(BaseModel):
     url: str
     read: bool = False
-    date_read: datetime = datetime.utcnow()
+    date_read: datetime | None = None
 
 
 class ArticleResponse(BaseModel):
