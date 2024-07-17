@@ -1,38 +1,36 @@
-from pydantic import BaseModel
-from typing import List, Optional
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 
 class ArticleCreate(BaseModel):
     url: str
     read: bool = False
-    date_read: Optional[datetime] = None
+    date_read: datetime | None = None
 
 
 class ArticleUpdate(BaseModel):
     read: bool
-    date_read: Optional[datetime] = None
+    date_read: datetime | None = None
 
 
 class ArticleResponse(BaseModel):
     id: int
     url: str
     read: bool
-    date_read: Optional[datetime]
+    date_read: datetime | None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserCreate(BaseModel):
-    email: Optional[str] = None
-    uuid: Optional[str] = None
+    email: str | None = None
+    uuid: str | None = None
 
 
 class UserResponse(BaseModel):
     id: str
-    email: Optional[str] = None
-    articles: List[ArticleResponse] = []
+    email: str | None = None
+    articles: list[ArticleResponse] = []
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

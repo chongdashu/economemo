@@ -1,4 +1,4 @@
-from typing import List
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -74,7 +74,7 @@ def create_article(
         db_article.read = article.read
         db_article.date_read = article.date_read
     else:
-        db_article = Article(**article.dict(), user_id=user_id)
+        db_article = Article(**article.model_dump(), user_id=user_id)
         db.add(db_article)
 
     db.commit()
@@ -104,7 +104,7 @@ def update_article(
     return db_article
 
 
-@app.get("/articles/", response_model=List[ArticleResponse])
+@app.get("/articles/", response_model=list[ArticleResponse])
 def read_articles(
     user_id: str = Header(None, alias="User-Id"),
     db: Session = Depends(get_db),
@@ -115,7 +115,7 @@ def read_articles(
     return articles
 
 
-@app.get("/articles/by-url", response_model=List[ArticleResponse])
+@app.get("/articles/by-url", response_model=list[ArticleResponse])
 def read_article_by_url(
     url: str = Query(...),
     user_id: str = Header(None, alias="User-Id"),
@@ -127,11 +127,11 @@ def read_article_by_url(
     return articles
 
 
-@app.on_event("startup")
-async def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     await database.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown():
+    yield
     await database.disconnect()
+
+
+app.router.lifespan_context = lifespan
