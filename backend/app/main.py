@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
 
+import os
+
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -10,12 +12,13 @@ from .models import Article, Base, User
 
 Base.metadata.create_all(bind=engine)
 
+CHROME_EXTENSION_ID = os.getenv("CHROME_EXTENSION_ID")
 app = FastAPI()
 
 # Allow CORS for the Chrome extension and the Economist website
 origins = [
-    "chrome-extension://kecpficpeakaepppkojkcgffmlcpgmlcpgmlj",
     "https://www.economist.com",
+    f"chrome-extension://{CHROME_EXTENSION_ID}",
     "https://127.0.0.1:8000",
 ]
 
