@@ -1,10 +1,7 @@
 // Function to check the article's read status
 async function checkReadStatus(articleUrl, userId) {
-    console.log(`Checking read status for ${articleUrl} with user_id ${userId}`);
     const response = await fetch(`https://127.0.0.1:8000/articles/by-url?url=${encodeURIComponent(articleUrl)}`, {
-        method: 'GET',
         headers: {
-            'Content-Type': 'application/json',
             'User-Id': userId
         }
     });
@@ -16,10 +13,9 @@ async function checkReadStatus(articleUrl, userId) {
     return data.length > 0 ? data[0] : null;
 }
 
-// Function to update the article's read status
-async function updateReadStatus(articleUrl, status, userId) {
-    console.log(`Updating read status for ${articleUrl} to ${status} with user_id ${userId}`);
-    const response = await fetch('https://127.0.0.1:8000/articles', {
+// Function to create a new article
+async function createArticle(articleUrl, userId) {
+    const response = await fetch('https://127.0.0.1:8000/articles/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -27,8 +23,24 @@ async function updateReadStatus(articleUrl, status, userId) {
         },
         body: JSON.stringify({
             url: articleUrl,
-            read: status,
-            date_read: status ? new Date().toISOString() : null
+            read: true,
+            date_read: new Date().toISOString()
+        })
+    });
+    return response.json();
+}
+
+// Function to update the article's read status
+async function updateArticle(articleId, readStatus, userId) {
+    const response = await fetch(`https://127.0.0.1:8000/articles/${articleId}/`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'User-Id': userId
+        },
+        body: JSON.stringify({
+            read: readStatus,
+            date_read: readStatus ? new Date().toISOString() : null
         })
     });
     return response.json();
@@ -76,15 +88,22 @@ function createButton(articleUrl, userId) {
             button.textContent = `Read on ${new Date(readStatus.date_read).toLocaleDateString()}`;
             button.onclick = () => {
                 if (confirm('Do you want to mark this article as unread?')) {
-                    updateReadStatus(articleUrl, false, userId).then(() => {
+                    updateArticle(readStatus.id, false, userId).then(() => {
                         setButtonState();
                     });
                 }
             };
+        } else if (readStatus && !readStatus.read) {
+            button.textContent = 'Mark as Read';
+            button.onclick = () => {
+                updateArticle(readStatus.id, true, userId).then(() => {
+                    setButtonState();
+                });
+            };
         } else {
             button.textContent = 'Mark as Read';
             button.onclick = () => {
-                updateReadStatus(articleUrl, true, userId).then(() => {
+                createArticle(articleUrl, userId).then(() => {
                     setButtonState();
                 });
             };
@@ -108,12 +127,24 @@ function createButton(articleUrl, userId) {
 }
 
 // Function to observe DOM changes and initialize the button
-function observeDOM(userId) {
+function observeDOM() {
     const observer = new MutationObserver(async (mutations, observer) => {
         const saveButton = document.querySelector('button[aria-label="Save"]');
         const existingButton = document.querySelector('#mark-as-read-button');
         if (saveButton && !existingButton) {
             const articleUrl = window.location.href;
+            let userId = localStorage.getItem('userId');
+            if (!userId) {
+                userId = crypto.randomUUID();
+                localStorage.setItem('userId', userId);
+                fetch('https://127.0.0.1:8000/users/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ uuid: userId })
+                });
+            }
             createButton(articleUrl, userId);
         }
         // Keep observing until the button is found and added
@@ -122,33 +153,9 @@ function observeDOM(userId) {
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// Initialization code
-function myInitCode() {
-    console.warn("ASDHASDASDA");
-    let userId = localStorage.getItem('userId');
-    if (!userId) {
-        userId = crypto.randomUUID();
-        localStorage.setItem('userId', userId);
-        fetch('https://127.0.0.1:8000/users/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ uuid: userId })
-        }).then(() => {
-            observeDOM(userId);
-        });
-    } else {
-        observeDOM(userId);
-    }
-}
-
+// Run the main function when the content script is loaded
 if (document.readyState !== 'loading') {
-    console.log('document is already ready, just execute code here');
-    myInitCode();
+    observeDOM();
 } else {
-    document.addEventListener('DOMContentLoaded', function () {
-        console.log('document was not ready, place code here');
-        myInitCode();
-    });
+    document.addEventListener('DOMContentLoaded', observeDOM);
 }

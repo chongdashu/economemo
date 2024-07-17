@@ -52,28 +52,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 actionButton.textContent = 'Mark as Unread';
                 actionButton.onclick = () => {
                     if (confirm('Do you want to mark this article as unread?')) {
-                        updateReadStatus(articleUrl, false);
+                        updateReadStatus(data[0].id, false);
                     }
                 };
             } else {
                 articleStatusElement.textContent = 'Unread';
                 actionButton.textContent = 'Mark as Read';
                 actionButton.onclick = () => {
-                    updateReadStatus(articleUrl, true);
+                    createOrUpdateReadStatus(articleUrl, true);
                 };
             }
         } else {
             articleStatusElement.textContent = 'Unread';
             actionButton.textContent = 'Mark as Read';
             actionButton.onclick = () => {
-                updateReadStatus(articleUrl, true);
+                createOrUpdateReadStatus(articleUrl, true);
             };
         }
         actionButton.style.display = 'block';
     }
 
-    // Update read status
-    async function updateReadStatus(articleUrl, status) {
+    // Create or update read status
+    async function createOrUpdateReadStatus(articleUrl, status) {
         const response = await fetch('https://127.0.0.1:8000/articles', {
             method: 'POST',
             headers: {
@@ -89,6 +89,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (response.ok) {
             checkReadStatus(articleUrl);
+        } else {
+            const errorText = await response.text();
+            errorMessageElement.textContent = `Error: ${errorText}`;
+            errorMessageElement.style.color = 'red';
+            console.error('Failed to update read status:', errorText);
+        }
+    }
+
+    // Update read status
+    async function updateReadStatus(articleId, status) {
+        const response = await fetch(`https://127.0.0.1:8000/articles/${articleId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Id': userId || ''
+            },
+            body: JSON.stringify({
+                read: status,
+                date_read: status ? new Date().toISOString() : null
+            })
+        });
+
+        if (response.ok) {
+            checkReadStatus(window.location.href);
         } else {
             const errorText = await response.text();
             errorMessageElement.textContent = `Error: ${errorText}`;

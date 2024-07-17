@@ -3,8 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from .db import SessionLocal, engine, database
 from .models import Base, User, Article
-from pydantic import BaseModel
-from datetime import datetime
+from .api import ArticleCreate, ArticleUpdate, ArticleResponse, UserCreate, UserResponse
 from typing import List
 import uuid
 
@@ -14,7 +13,7 @@ app = FastAPI()
 
 # Allow CORS for the Chrome extension and the Economist website
 origins = [
-    "chrome-extension://kecpficpeakaepppkojkcgffmlcpgmlj",
+    "chrome-extension://kecpficpeakaepppkojkcgffmlcpgmlcpgmlj",
     "https://www.economist.com",
     "https://127.0.0.1:8000",
 ]
@@ -26,36 +25,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-class ArticleCreate(BaseModel):
-    url: str
-    read: bool = False
-    date_read: datetime | None = None
-
-
-class ArticleResponse(BaseModel):
-    id: int
-    url: str
-    read: bool
-    date_read: datetime
-
-    class Config:
-        orm_mode = True
-
-
-class UserCreate(BaseModel):
-    email: str | None = None
-    uuid: str = None
-
-
-class UserResponse(BaseModel):
-    id: str
-    email: str | None = None
-    articles: List[ArticleResponse] = []
-
-    class Config:
-        orm_mode = True
 
 
 def get_db():
@@ -77,6 +46,8 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/login/", response_model=UserResponse)
 def login(user: UserCreate, db: Session = Depends(get_db)):
+    if not user.email:
+        raise HTTPException(status_code=400, detail="Email is required")
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user:
         raise HTTPException(status_code=400, detail="User not found")
@@ -89,11 +60,40 @@ def create_article(
     user_id: str = Header(None, alias="User-Id"),
     db: Session = Depends(get_db),
 ):
-    print(f"create_article: user_id={user_id}")
     if user_id is None:
         raise HTTPException(status_code=400, detail="User ID is required")
-    db_article = Article(**article.dict(), user_id=user_id)
-    db.add(db_article)
+
+    db_article = db.query(Article).filter(Article.url == article.url, Article.user_id == user_id).first()
+
+    if db_article:
+        db_article.read = article.read
+        db_article.date_read = article.date_read
+    else:
+        db_article = Article(**article.dict(), user_id=user_id)
+        db.add(db_article)
+
+    db.commit()
+    db.refresh(db_article)
+    return db_article
+
+
+@app.patch("/articles/{article_id}", response_model=ArticleResponse)
+def update_article(
+    article_id: int,
+    article: ArticleUpdate,
+    user_id: str = Header(None, alias="User-Id"),
+    db: Session = Depends(get_db),
+):
+    if user_id is None:
+        raise HTTPException(status_code=400, detail="User ID is required")
+
+    db_article = db.query(Article).filter(Article.id == article_id, Article.user_id == user_id).first()
+
+    if db_article is None:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    db_article.read = article.read
+    db_article.date_read = article.date_read
     db.commit()
     db.refresh(db_article)
     return db_article
@@ -104,7 +104,6 @@ def read_articles(
     user_id: str = Header(None, alias="User-Id"),
     db: Session = Depends(get_db),
 ):
-    print(f"read_articles: user_id={user_id}")
     if user_id is None:
         raise HTTPException(status_code=400, detail="User ID is required")
     articles = db.query(Article).filter(Article.user_id == user_id).all()
@@ -117,7 +116,6 @@ def read_article_by_url(
     user_id: str = Header(None, alias="User-Id"),
     db: Session = Depends(get_db),
 ):
-    print(url, user_id)
     if user_id is None:
         raise HTTPException(status_code=400, detail="User ID is required")
     articles = db.query(Article).filter(Article.url == url, Article.user_id == user_id).all()
