@@ -1,11 +1,12 @@
-from fastapi import FastAPI, Depends, HTTPException, Header, Query
+from typing import List
+
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from .db import SessionLocal, engine, database
-from .models import Base, User, Article
-from .api import ArticleCreate, ArticleUpdate, ArticleResponse, UserCreate, UserResponse
-from typing import List
-import uuid
+
+from .api import ArticleCreate, ArticleResponse, ArticleUpdate, UserCreate, UserResponse
+from .db import SessionLocal, database, engine
+from .models import Article, Base, User
 
 Base.metadata.create_all(bind=engine)
 
@@ -37,6 +38,10 @@ def get_db():
 
 @app.post("/users/", response_model=UserResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    if user.email:
+        existing_user = db.query(User).filter(User.email == user.email).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="User with this email already exists")
     db_user = User(email=user.email) if user.email else User(id=user.uuid)
     db.add(db_user)
     db.commit()
