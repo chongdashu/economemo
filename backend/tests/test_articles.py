@@ -30,7 +30,7 @@ def test_create_article(test_user):
     )
     assert response.status_code == 200
     assert response.json()["url"] == "http://example.com/article1"
-    assert response.json()["read"] == True
+    assert response.json()["read"]
 
 
 def test_read_articles(test_user):
@@ -97,7 +97,7 @@ def test_mark_article_as_unread(test_user):
         },
     )
     assert response.status_code == 200
-    assert response.json()["read"] == False
+    assert not response.json()["read"]
     assert response.json()["date_read"] is None
 
 
@@ -124,7 +124,7 @@ def test_mark_article_as_read_when_already_read(test_user):
         },
     )
     assert response.status_code == 200
-    assert response.json()["read"] == True
+    assert response.json()["read"]
 
 
 def test_mark_article_as_unread_when_already_unread(test_user):
@@ -150,7 +150,7 @@ def test_mark_article_as_unread_when_already_unread(test_user):
         },
     )
     assert response.status_code == 200
-    assert response.json()["read"] == False
+    assert not response.json()["read"]
     assert response.json()["date_read"] is None
 
 
@@ -177,5 +177,5 @@ def test_mark_article_as_read_when_already_unread(test_user):
         },
     )
     assert response.status_code == 200
-    assert response.json()["read"] == True
+    assert response.json()["read"]
     assert response.json()["date_read"] == "2023-12-01T00:00:00"
