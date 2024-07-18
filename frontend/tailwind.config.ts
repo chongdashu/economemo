@@ -7,7 +7,7 @@ const config = {
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
-	],
+  ],
   prefix: "",
   theme: {
     container: {
@@ -52,6 +52,12 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Added the following color scales for the heatmap visualization
+        'color-empty': '#ebedf0',
+        'color-scale-1': '#c6e48b',
+        'color-scale-2': '#7bc96f',
+        'color-scale-3': '#239a3b',
+        'color-scale-4': '#196127',
       },
       borderRadius: {
         lg: "var(--radius)",
