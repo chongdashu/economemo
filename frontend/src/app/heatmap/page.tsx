@@ -1,11 +1,18 @@
-import NavBar from '@/components/NavBar';
-import Heatmap from '@/components/Heatmap';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../api/auth/[...nextauth]/route";
+import { redirect } from "next/navigation";
 
-export default function HeatmapPage() {
-    return (
-        <>
-            <NavBar />
-            <Heatmap />
-        </>
-    );
+export default async function HeatmapPage() {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  return (
+    <div>
+      <h1>Heatmap</h1>
+      {/* Heatmap content here */}
+    </div>
+  );
 }

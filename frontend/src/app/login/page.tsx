@@ -1,48 +1,34 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { signIn } from 'next-auth/react';
 
-const LoginPage = () => {
+export default function LoginPage() {
   const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
-  const { login, register } = useAuth();
-  const router = useRouter();
 
-  const handleLogin = async () => {
-    try {
-      await login(email);
-      router.push('/articles');
-    } catch (err) {
-      setError('Login failed');
-    }
-  };
-
-  const handleRegister = async () => {
-    try {
-      await register(email);
-      router.push('/articles');
-    } catch (err) {
-      setError('Registration failed');
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await signIn('credentials', { email });
   };
 
   return (
-    <div>
-      <h1>Login</h1>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Enter email"
-        required
-      />
-      <button onClick={handleLogin}>Login</button>
-      <button onClick={handleRegister}>Register</button>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Login</h1>
+      <form onSubmit={handleSubmit}>
+        <label className="block mb-2 text-lg">
+          Email
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="block w-full p-2 border border-gray-300 rounded mt-2"
+            required
+          />
+        </label>
+        <button type="submit" className="mt-4 p-2 bg-blue-600 text-white rounded">
+          Login
+        </button>
+      </form>
     </div>
   );
-};
-
-export default LoginPage;
+}

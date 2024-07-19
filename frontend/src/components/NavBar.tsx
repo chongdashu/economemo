@@ -1,28 +1,22 @@
-'use client';
+import Link from "next/link";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../app/api/auth/[...nextauth]/route";
 
-import { useAuth } from '@/context/AuthContext';
-import Link from 'next/link';
-
-const NavBar = () => {
-  const { userId, email, logout } = useAuth();
+export default async function NavBar() {
+  const session = await getServerSession(authOptions);
 
   return (
     <nav>
-      <ul>
-        <li><Link href="/">Home</Link></li>
-        <li><Link href="/articles">Articles</Link></li>
-        <li><Link href="/heatmap">Heatmap</Link></li>
-        {userId ? (
-          <>
-            <li>{email}</li>
-            <li><button onClick={logout}>Logout</button></li>
-          </>
-        ) : (
-          <li><Link href="/login">Login</Link></li>
-        )}
-      </ul>
+      <Link href="/">Home</Link>
+      {session ? (
+        <>
+          <Link href="/articles">Articles</Link>
+          <Link href="/heatmap">Heatmap</Link>
+          <Link href="/api/auth/signout">Logout</Link>
+        </>
+      ) : (
+        <Link href="/login">Login</Link>
+      )}
     </nav>
   );
-};
-
-export default NavBar;
+}

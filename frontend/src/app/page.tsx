@@ -1,12 +1,9 @@
-import NavBar from '@/components/NavBar';
-
-export default function Home() {
+export default function HomePage() {
     return (
-        <>
-            <NavBar />
-            <div className="container mx-auto p-4">
-                <h1 className="text-2xl">Welcome to Economemo</h1>
-            </div>
-        </>
+      <div>
+        <h1 className="text-2xl font-bold">Welcome to Economemo</h1>
+        <p>Log in to access your tracked articles.</p>
+      </div>
     );
-}
+  }
+  
