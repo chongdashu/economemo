@@ -16,8 +16,6 @@ export default function NavBar() {
           <Link href="/login">Login</Link>
         ) : (
           <>
-            <Link href="/articles">Articles</Link>
-            <Link href="/heatmap">Heatmap</Link>
             <button onClick={() => signOut()}>Logout</button>
           </>
         )}
