@@ -2,18 +2,24 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import axios from 'axios';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(''); // Clear previous errors
 
     try {
-      await signIn('credentials', { email });
+      const result = await signIn('credentials', { email, redirect: false });
+      if (result?.error) {
+        setError(result.error);
+      } else {
+        router.push('/');
+      }
     } catch (err: any) {
       setError(err.response?.data?.detail || 'An error occurred');
     }
