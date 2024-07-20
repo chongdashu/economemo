@@ -1,22 +1,27 @@
-import Link from "next/link";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../app/api/auth/[...nextauth]/route";
+'use client';
 
-export default async function NavBar() {
-  const session = await getServerSession(authOptions);
+import { signIn, signOut, useSession } from 'next-auth/react';
+import Link from 'next/link';
+
+export default function NavBar() {
+  const { data: session } = useSession();
 
   return (
-    <nav>
-      <Link href="/">Home</Link>
-      {session ? (
-        <>
-          <Link href="/articles">Articles</Link>
-          <Link href="/heatmap">Heatmap</Link>
-          <Link href="/api/auth/signout">Logout</Link>
-        </>
-      ) : (
-        <Link href="/login">Login</Link>
-      )}
+    <nav className="flex justify-between p-4 bg-gray-200">
+      <div className="space-x-4">
+        <Link href="/">Home</Link>
+      </div>
+      <div className="space-x-4">
+        {!session ? (
+          <Link href="/login">Login</Link>
+        ) : (
+          <>
+            <Link href="/articles">Articles</Link>
+            <Link href="/heatmap">Heatmap</Link>
+            <button onClick={() => signOut()}>Logout</button>
+          </>
+        )}
+      </div>
     </nav>
   );
 }

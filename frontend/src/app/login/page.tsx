@@ -2,13 +2,21 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import axios from 'axios';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signIn('credentials', { email });
+    setError(''); // Clear previous errors
+
+    try {
+      await signIn('credentials', { email });
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'An error occurred');
+    }
   };
 
   return (
@@ -29,6 +37,7 @@ export default function LoginPage() {
           Login
         </button>
       </form>
+      {error && <p className="mt-4 text-red-600">{error}</p>}
     </div>
   );
 }
