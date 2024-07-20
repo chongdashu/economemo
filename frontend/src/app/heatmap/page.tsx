@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
+import Heatmap from "@/components/Heatmap";
 
 export default async function HeatmapPage() {
   const session = await getServerSession(authOptions);
@@ -10,9 +11,8 @@ export default async function HeatmapPage() {
   }
 
   return (
-    <div>
-      <h1>Heatmap</h1>
-      {/* Heatmap content here */}
+    <div className="container mx-auto p-4">
+      <Heatmap />
     </div>
   );
 }

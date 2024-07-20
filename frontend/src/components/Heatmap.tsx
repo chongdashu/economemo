@@ -2,56 +2,47 @@
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Calendar } from '@ant-design/plots';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import ReactCalendarHeatmap from 'react-calendar-heatmap';
+import 'react-calendar-heatmap/dist/styles.css';
+import { useSession } from 'next-auth/react';
 
 const Heatmap = () => {
-  const { userId } = useAuth();
-  const router = useRouter();
+  const { data: session, status } = useSession();
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    if (!userId) {
-      router.push('/login');
-      return;
+    if (status === 'authenticated') {
+      const fetchData = async () => {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/articles`, {
+          headers: { 'User-Id': session.user.id },
+        });
+
+        const transformedData = response.data.map((article) => ({
+          date: new Date(article.date_read).toISOString().split('T')[0],
+          count: 1,
+        }));
+
+        setData(transformedData);
+      };
+
+      fetchData();
     }
-
-    const fetchData = async () => {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/articles`, {
-        headers: { 'User-Id': userId },
-      });
-
-      const transformedData = response.data.map((article) => ({
-        date: new Date(article.date_read).toISOString().split('T')[0],
-        value: 1,
-      }));
-
-      setData(transformedData);
-    };
-
-    fetchData();
-  }, [userId, router]);
-
-  const config = {
-    data,
-    width: 600,
-    height: 400,
-    autoFit: false,
-    padding: [50, 30, 50, 30],
-    timeRange: ['2024-01-01', '2024-12-31'],
-    xField: 'date',
-    yField: 'value',
-    calendar: {
-      cellPadding: 2,
-      cellSize: 20,
-    },
-  };
+  }, [session, status]);
 
   return (
     <div>
       <h1>Heatmap</h1>
-      <Calendar {...config} />
+      <ReactCalendarHeatmap
+        startDate={new Date('2024-01-01')}
+        endDate={new Date('2024-12-31')}
+        values={data}
+        classForValue={(value) => {
+          if (!value) {
+            return 'color-empty';
+          }
+          return `color-scale-${value.count}`;
+        }}
+      />
     </div>
   );
 };
