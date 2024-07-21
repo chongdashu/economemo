@@ -9,6 +9,7 @@ jest.mock('next-auth/react', () => ({
 
 jest.mock('@/lib/axios', () => ({
   get: jest.fn(),
+  isAxiosError: jest.fn(),
 }));
 
 const mockArticles = [
@@ -20,6 +21,7 @@ describe('ArticleTable', () => {
   beforeEach(() => {
     (useSession as jest.Mock).mockReturnValue({ data: { user: { id: '123' } }, status: 'authenticated' });
     (axios.get as jest.Mock).mockResolvedValue({ data: mockArticles });
+    (axios.isAxiosError as jest.Mock).mockReturnValue(true);
   });
 
   it('renders articles when fetched successfully', async () => {
@@ -31,10 +33,13 @@ describe('ArticleTable', () => {
   });
 
   it('displays error message when fetching fails', async () => {
-    (axios.get as jest.Mock).mockRejectedValue(new Error('Failed to fetch'));
+    const axiosError = new Error('Failed to fetch') as any;
+    axiosError.response = { data: { detail: 'Custom error message' } };
+    (axios.get as jest.Mock).mockRejectedValue(axiosError);
+
     render(<ArticleTable />);
     await waitFor(() => {
-      expect(screen.getByText('An error occurred')).toBeInTheDocument();
+      expect(screen.getByText('Custom error message')).toBeInTheDocument();
     });
   });
 });
