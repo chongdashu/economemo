@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import axios from '@/lib/axios';
+import { useSession } from 'next-auth/react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface Article {
   id: number;
@@ -13,48 +14,69 @@ interface Article {
 }
 
 const ArticleTable = () => {
-  const { userId } = useAuth();
-  const router = useRouter();
+  const { data: session } = useSession();
   const [articles, setArticles] = useState<Article[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!userId) {
-      router.push('/login');
-      return;
-    }
-
     const fetchArticles = async () => {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/articles`, {
-        headers: { 'User-Id': userId },
-      });
-      setArticles(response.data);
+      if (!session) {
+        setError('User is not authenticated');
+        return;
+      }
+
+      try {
+        const response = await axios.get('/articles', {
+          headers: { 'User-Id': session.user.id }
+        });
+        setArticles(response.data);
+      } catch (error) {
+        console.error('Error fetching articles:', error);
+        if (axios.isAxiosError(error)) {
+          setError(error.response?.data.detail || 'An error occurred');
+        } else {
+          setError('An error occurred');
+        }
+      }
     };
 
     fetchArticles();
-  }, [userId, router]);
+  }, [session]);
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
-    <div>
-      <h1>Articles</h1>
-      <table className="min-w-full leading-normal">
-        <thead>
-          <tr>
-            <th>URL</th>
-            <th>Read</th>
-            <th>Date Read</th>
-          </tr>
-        </thead>
-        <tbody>
-          {articles.map((article) => (
-            <tr key={article.id}>
-              <td>{article.url}</td>
-              <td>{article.read ? 'Yes' : 'No'}</td>
-              <td>{article.date_read}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Article</TableHead>
+          <TableHead>Read Date</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {articles.map((article) => (
+          <TableRow key={article.id}>
+            <TableCell>
+              <a
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                {article.url.split('/').pop()}
+              </a>
+            </TableCell>
+            <TableCell>{new Date(article.date_read).toLocaleDateString()}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 };
 
