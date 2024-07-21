@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Button } from "@/components/ui/button"
-import { FileText, Calendar } from "lucide-react"
+import { Button } from '@/components/ui/button';
+import { FileText, Calendar } from 'lucide-react';
 
 export default function Sidebar() {
   const { data: session } = useSession();

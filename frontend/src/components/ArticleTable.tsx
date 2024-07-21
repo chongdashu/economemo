@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import axios from '@/lib/axios';
 import { useSession } from 'next-auth/react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Article {
   id: number;
@@ -27,7 +27,7 @@ const ArticleTable = () => {
 
       try {
         const response = await axios.get('/articles', {
-          headers: { 'User-Id': session.user.id }
+          headers: { 'User-Id': session.user.id },
         });
         setArticles(response.data);
       } catch (error) {
@@ -63,12 +63,7 @@ const ArticleTable = () => {
         {articles.map((article) => (
           <TableRow key={article.id}>
             <TableCell>
-              <a
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-              >
+              <a href={article.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                 {article.url.split('/').pop()}
               </a>
             </TableCell>
