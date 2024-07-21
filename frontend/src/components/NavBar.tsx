@@ -1,23 +1,24 @@
-'use client';
+"use client";
 
 import { signIn, signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { Button } from "@/components/ui/button"
 
 export default function NavBar() {
   const { data: session } = useSession();
 
   return (
-    <nav className="flex justify-between p-4 bg-gray-200">
+    <nav className="flex justify-between items-center p-4 bg-background border-b">
       <div className="space-x-4">
-        <Link href="/">Home</Link>
+        <Link href="/" className="text-lg font-semibold hover:text-primary">Home</Link>
       </div>
       <div className="space-x-4">
         {!session ? (
-          <Link href="/login">Login</Link>
+          <Button variant="outline" asChild>
+            <Link href="/login">Login</Link>
+          </Button>
         ) : (
-          <>
-            <button onClick={() => signOut()}>Logout</button>
-          </>
+          <Button variant="outline" onClick={() => signOut()}>Logout</Button>
         )}
       </div>
     </nav>

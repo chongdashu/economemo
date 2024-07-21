@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -11,7 +14,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(''); // Clear previous errors
+    setError('');
 
     try {
       const result = await signIn('credentials', { email, redirect: false });
@@ -26,24 +29,30 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 max-w-md">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
-      <form onSubmit={handleSubmit}>
-        <label className="block mb-2 text-lg">
-          Email
-          <input
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium mb-1">
+            Email
+          </label>
+          <Input
+            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="block w-full p-2 border border-gray-300 rounded mt-2"
             required
           />
-        </label>
-        <button type="submit" className="mt-4 p-2 bg-blue-600 text-white rounded">
+        </div>
+        <Button type="submit" className="w-full">
           Login
-        </button>
+        </Button>
       </form>
-      {error && <p className="mt-4 text-red-600">{error}</p>}
+      {error && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 }

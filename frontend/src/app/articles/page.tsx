@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import axios from '@/lib/axios';
 import { getSession } from 'next-auth/react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface Article {
   id: number;
@@ -44,22 +46,23 @@ export default function ArticlesPage() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Articles</h1>
-      {error && <p className="text-red-500">{error}</p>}
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Article
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Read Date
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Article</TableHead>
+            <TableHead>Read Date</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {articles.map((article) => (
-            <tr key={article.id}>
-              <td className="px-6 py-4 whitespace-nowrap">
+            <TableRow key={article.id}>
+              <TableCell>
                 <a
                   href={article.url}
                   target="_blank"
@@ -68,14 +71,12 @@ export default function ArticlesPage() {
                 >
                   {article.url.split('/').pop()}
                 </a>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                {new Date(article.date_read).toLocaleDateString()}
-              </td>
-            </tr>
+              </TableCell>
+              <TableCell>{new Date(article.date_read).toLocaleDateString()}</TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }
