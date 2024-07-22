@@ -1,8 +1,8 @@
-import NextAuth from 'next-auth';
+import NextAuth, { AuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import axios from 'axios';
 
-export const authOptions = {
+export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -12,7 +12,7 @@ export const authOptions = {
       async authorize(credentials) {
         try {
           const res = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/login`, {
-            email: credentials.email
+            email: credentials?.email,
           });
           if (res.data) {
             return res.data;
@@ -44,8 +44,10 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      session.user.id = token.id;
-      session.user.email = token.email;
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.email = token.email as string;
+      }
       return session;
     },
   },
@@ -53,4 +55,5 @@ export const authOptions = {
 };
 
 const handler = NextAuth(authOptions);
+
 export { handler as GET, handler as POST };
