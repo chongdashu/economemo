@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import axios from '@/lib/axios';
+import axios, { AxiosError } from 'axios';
 import { useSession } from 'next-auth/react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -28,15 +28,15 @@ const ArticleTable: React.FC = () => {
       }
 
       try {
-        const response = await axios.get('/articles', {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/articles`, {
           headers: { 'User-Id': session.user.id },
         });
         setArticles(response.data);
         setError(null);
       } catch (error) {
         console.error('Error fetching articles:', error);
-        if (axios.isAxiosError(error)) {
-          setError(error.response?.data.detail || 'An error occurred while fetching articles');
+        if (error instanceof AxiosError) {
+          setError(error.response?.data?.detail || 'An error occurred while fetching articles');
         } else {
           setError('An unexpected error occurred');
         }

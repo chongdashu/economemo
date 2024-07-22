@@ -19,6 +19,7 @@ origins = [
     "https://www.economist.com",
     f"chrome-extension://{CHROME_EXTENSION_ID}",
     "https://127.0.0.1:8000",
+    "http://localhost:3000",
 ]
 
 app.add_middleware(
@@ -57,7 +58,7 @@ def login(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email is required")
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user:
-        raise HTTPException(status_code=400, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
 

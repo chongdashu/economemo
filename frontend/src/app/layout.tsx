@@ -6,7 +6,10 @@ import Sidebar from '@/components/Sidebar';
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="flex min-h-screen bg-background text-foreground">
+      <body 
+        className="flex min-h-screen bg-background text-foreground"
+        suppressHydrationWarning={true}
+      >
         <Providers>
           <div className="flex flex-col w-full">
             <NavBar />

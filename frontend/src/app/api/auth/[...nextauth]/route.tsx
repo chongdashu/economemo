@@ -11,15 +11,24 @@ export const authOptions = {
       },
       async authorize(credentials) {
         try {
-          const res = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/login`, { email: credentials.email });
+          const res = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/login`, {
+            email: credentials.email
+          });
           if (res.data) {
             return res.data;
-          } else {
-            return null;
           }
         } catch (error) {
-          return null;
+          if (axios.isAxiosError(error)) {
+            if (error.response?.status === 404) {
+              throw new Error('User not found');
+            }
+            if (error.response?.data?.detail) {
+              throw new Error(error.response.data.detail);
+            }
+          }
+          throw new Error('An unexpected error occurred');
         }
+        return null;
       },
     }),
   ],
@@ -44,5 +53,4 @@ export const authOptions = {
 };
 
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };
