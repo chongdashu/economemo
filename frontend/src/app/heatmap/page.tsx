@@ -1,13 +1,13 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../api/auth/[...nextauth]/route";
-import { redirect } from "next/navigation";
-import Heatmap from "@/components/Heatmap";
+import { getServerSession } from 'next-auth/next';
+import { redirect } from 'next/navigation';
+import Heatmap from '@/components/Heatmap';
+import { authOptions } from '../api/auth/[...nextauth]/options';
 
 export default async function HeatmapPage() {
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect("/login");
+    redirect('/login');
   }
 
   return (
