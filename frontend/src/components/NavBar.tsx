@@ -13,6 +13,11 @@ export default function NavBar() {
         <Link href="/" className="text-lg font-semibold hover:text-primary">
           Home
         </Link>
+        {session && (
+          <Link href="/dashboard" className="text-lg font-semibold hover:text-primary">
+            Dashboard
+          </Link>
+        )}
       </div>
       <div className="space-x-4">
         {!session ? (
@@ -20,9 +25,12 @@ export default function NavBar() {
             <Link href="/login">Login</Link>
           </Button>
         ) : (
-          <Button variant="outline" onClick={() => signOut()}>
-            Logout
-          </Button>
+          <>
+            <span className="mr-4">Logged in as {session.user?.email}</span>
+            <Button variant="outline" onClick={() => signOut()}>
+              Logout
+            </Button>
+          </>
         )}
       </div>
     </nav>
