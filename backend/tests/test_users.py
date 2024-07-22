@@ -22,7 +22,7 @@ def test_create_user_with_existing_email():
 
 def test_login_nonexistent_user():
     response = client.post("/login/", json={"email": "nonexistentuser@example.com"})
-    assert response.status_code == 400
+    assert response.status_code == 404
     assert "User not found" in response.json()["detail"]
 
 
