@@ -1,7 +1,12 @@
 'use client';
 
 import { SessionProvider } from 'next-auth/react';
+import { ReactNode } from 'react';
 
-export function Providers({ children }) {
+interface RootLayoutProps {
+  children: ReactNode;
+}
+
+export function Providers({ children }: RootLayoutProps) {
   return <SessionProvider>{children}</SessionProvider>;
 }

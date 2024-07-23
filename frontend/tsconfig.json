@@ -28,7 +28,8 @@
     ".next/types/**/*.ts",
     "jest.config.js",
     "jest.setup.js",
-    "src/global.d.ts"
+    "src/global.d.ts",
+    "src/types/next-auth.d.ts"
   ],
   "exclude": ["node_modules"]
 }

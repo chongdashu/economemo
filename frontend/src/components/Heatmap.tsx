@@ -6,6 +6,10 @@ import ReactCalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { useSession } from 'next-auth/react';
 
+interface Article {
+  date_read: string;
+}
+
 const Heatmap = () => {
   const { data: session, status } = useSession();
   const [data, setData] = useState([]);
@@ -17,7 +21,7 @@ const Heatmap = () => {
           headers: { 'User-Id': session.user.id },
         });
 
-        const transformedData = response.data.map((article) => ({
+        const transformedData = response.data.map((article: Article) => ({
           date: new Date(article.date_read).toISOString().split('T')[0],
           count: 1,
         }));

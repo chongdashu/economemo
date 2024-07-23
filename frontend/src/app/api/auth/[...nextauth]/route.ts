@@ -1,4 +1,3 @@
-import React from 'react';
 import NextAuth from 'next-auth';
 import { authOptions } from './options';
 

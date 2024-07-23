@@ -2,14 +2,16 @@ import './globals.css';
 import { Providers } from './providers';
 import NavBar from '@/components/NavBar';
 import Sidebar from '@/components/Sidebar';
+import { ReactNode } from 'react';
 
-export default function RootLayout({ children }) {
+interface RootLayoutProps {
+  children: ReactNode;
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
-      <body 
-        className="flex min-h-screen bg-background text-foreground"
-        suppressHydrationWarning={true}
-      >
+      <body className="flex min-h-screen bg-background text-foreground" suppressHydrationWarning={true}>
         <Providers>
           <div className="flex flex-col w-full">
             <NavBar />
