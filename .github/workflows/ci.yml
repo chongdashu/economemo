@@ -2,18 +2,18 @@ name: CI
 
 on:
   push:
-    branches: 
+    branches:
       - master
       - feature/**
   pull_request:
-    branches: 
+    branches:
       - master
       - feature/**
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:
 
 jobs:
-  build:
-
+  backend:
+    name: Backend Tests
     runs-on: ubuntu-latest
 
     services:
@@ -32,40 +32,81 @@ jobs:
           --health-retries 5
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r backend/requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
 
-    - name: Setup Database
-      run: |
-        sudo apt-get install -y postgresql-client
-        PGPASSWORD=postgrespassword psql -h localhost -U postgres -c "DROP DATABASE IF EXISTS testdb;"
-        PGPASSWORD=postgrespassword psql -h localhost -U postgres -c "CREATE DATABASE testdb OWNER postgres;"
-      env:
-        PGPASSWORD: postgrespassword
+      - name: Setup Database
+        run: |
+          sudo apt-get install -y postgresql-client
+          PGPASSWORD=postgrespassword psql -h localhost -U postgres -c "DROP DATABASE IF EXISTS testdb;"
+          PGPASSWORD=postgrespassword psql -h localhost -U postgres -c "CREATE DATABASE testdb OWNER postgres;"
+        env:
+          PGPASSWORD: postgrespassword
 
-    - name: Run tests
-      run: |
-        pytest --maxfail=1 --disable-warnings -v
-      env:
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgrespassword
-        POSTGRES_DB: testdb
-        POSTGRES_HOST: localhost
-        DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/testdb
-    
-    - name: Run mypy
-      run: mypy ./backend
-  
-    - name: Run linting
-      run: |
-        ruff check ./backend
+      - name: Run tests
+        run: |
+          pytest --maxfail=1 --disable-warnings -v
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: testdb
+          POSTGRES_HOST: localhost
+          DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/testdb
+
+      - name: Run mypy
+        run: mypy ./backend
+
+      - name: Run linting
+        run: |
+          ruff check ./backend
+
+  frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18"
+
+      - name: Cache npm packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-node-
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run linting
+        run: |
+          cd frontend
+          npm run lint
+
+      - name: Run tests
+        run: |
+          cd frontend
+          npm test
+
+      - name: Build project
+        run: |
+          cd frontend
+          npm run build

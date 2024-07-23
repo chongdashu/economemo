@@ -40,3 +40,6 @@ sudo apt install postgresql-client
 1. Run `cat /etc/resolv.conf | grep nameserver | awk '{print $2}'` to get the IP of the Postgres Server
 
 
+## Chrome Extension
+
+Allow invalid certificates for local testing via: chrome://flags/#allow-insecure-localhost
