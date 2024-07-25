@@ -1,5 +1,7 @@
 console.log("Content script loaded");
 
+let currentArticleId = null;
+
 // Function to check the article's read status
 async function checkReadStatus(articleUrl, userId) {
   console.log("Checking read status for:", articleUrl);
@@ -19,7 +21,11 @@ async function checkReadStatus(articleUrl, userId) {
   }
   const data = await response.json();
   console.log("Read status data:", data);
-  return data.length > 0 ? data[0] : null;
+  if (data.length > 0) {
+    currentArticleId = data[0].id; // Store the article ID
+    return data[0];
+  }
+  return null;
 }
 
 // Function to create a new article or update existing one
@@ -279,6 +285,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     setButtonState();
   } else if (message.action === "updateReadStatus") {
     console.log("Read status changed, updating button");
+    currentArticleId = message.articleId; // Store the article ID from the message
     updateButtonForReadStatus(message.status, message.date);
   }
 });
@@ -317,7 +324,7 @@ function updateButtonForReadStatus(status, date) {
     button.onclick = () => {
       if (confirm("Do you want to mark this article as unread?")) {
         chrome.storage.local.get(["userId"], (result) => {
-          updateArticle(null, false, result.userId).then(() => {
+          updateArticle(currentArticleId, false, result.userId).then(() => {
             setButtonState();
           });
         });

@@ -130,6 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (response.ok) {
+        const data = await response.json();
         checkReadStatus(articleUrl);
         // Notify content script to update button
         chrome.tabs.query(
@@ -140,6 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 action: "updateReadStatus",
                 status: status,
                 date: status ? new Date().toISOString() : null,
+                articleId: data.id, // Send the article ID
               });
             }
           }
@@ -185,6 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 action: "updateReadStatus",
                 status: status,
                 date: status ? new Date().toISOString() : null,
+                articleId: articleId, // Send the article ID
               });
             }
           }
