@@ -131,6 +131,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         checkReadStatus(articleUrl);
+        // Notify content script to update button
+        chrome.tabs.query(
+          { active: true, currentWindow: true },
+          function (tabs) {
+            if (tabs[0]) {
+              chrome.tabs.sendMessage(tabs[0].id, {
+                action: "updateReadStatus",
+                status: status,
+                date: status ? new Date().toISOString() : null,
+              });
+            }
+          }
+        );
       } else {
         const errorText = await response.text();
         errorMessageElement.textContent = `Error: ${errorText}`;
@@ -163,6 +176,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         checkReadStatus(articleUrl);
+        // Notify content script to update button
+        chrome.tabs.query(
+          { active: true, currentWindow: true },
+          function (tabs) {
+            if (tabs[0]) {
+              chrome.tabs.sendMessage(tabs[0].id, {
+                action: "updateReadStatus",
+                status: status,
+                date: status ? new Date().toISOString() : null,
+              });
+            }
+          }
+        );
       } else {
         const errorText = await response.text();
         errorMessageElement.textContent = `Error: ${errorText}`;

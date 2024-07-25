@@ -271,12 +271,109 @@ if (document.readyState !== "loading") {
   });
 }
 
+// Listen for messages from the popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log("Message received:", message);
   if (message.action === "loginStatusChanged") {
     console.log("Login status changed, updating button state");
     setButtonState();
+  } else if (message.action === "updateReadStatus") {
+    console.log("Read status changed, updating button");
+    updateButtonForReadStatus(message.status, message.date);
   }
 });
+
+function resetButtonToLoginState() {
+  console.log("Resetting button to login state");
+  button.textContent = "Login to Track";
+  button.style.backgroundColor = "#f0f0f0";
+  button.style.color = "#333";
+  button.style.cursor = "pointer";
+
+  let tooltip = document.getElementById("login-tooltip");
+  if (!tooltip) {
+    console.log("Creating new tooltip");
+    tooltip = createTooltip();
+    document.body.appendChild(tooltip);
+    console.log("Tooltip appended to body");
+  }
+
+  button.onclick = (event) => {
+    console.log("Button clicked");
+    event.stopPropagation();
+    toggleTooltip(button, tooltip);
+  };
+
+  // Close tooltip when clicking outside
+  document.addEventListener("click", () => {
+    console.log("Document clicked, hiding tooltip");
+    tooltip.style.display = "none";
+  });
+}
+
+function updateButtonForReadStatus(status, date) {
+  if (status) {
+    button.textContent = `Read on ${new Date(date).toLocaleDateString()}`;
+    button.onclick = () => {
+      if (confirm("Do you want to mark this article as unread?")) {
+        chrome.storage.local.get(["userId"], (result) => {
+          updateArticle(null, false, result.userId).then(() => {
+            setButtonState();
+          });
+        });
+      }
+    };
+  } else {
+    button.textContent = "Mark as Read";
+    button.onclick = () => {
+      chrome.storage.local.get(["userId"], (result) => {
+        createOrUpdateReadStatus(
+          window.location.href,
+          true,
+          result.userId
+        ).then(() => {
+          setButtonState();
+        });
+      });
+    };
+  }
+}
+
+// Update the setButtonState function to use updateButtonForReadStatus
+async function setButtonState() {
+  console.log("Setting button state");
+
+  chrome.storage.local.get(["userId", "userEmail"], async (result) => {
+    const userId = result.userId;
+    const userEmail = result.userEmail;
+    const articleUrl = window.location.href;
+
+    if (!userId || !userEmail) {
+      console.log("User not logged in");
+      resetButtonToLoginState();
+    } else {
+      console.log("User logged in");
+      // Remove tooltip if it exists
+      const existingTooltip = document.getElementById("login-tooltip");
+      if (existingTooltip) {
+        console.log("Removing existing tooltip");
+        existingTooltip.remove();
+      }
+
+      // Check read status and update button
+      const readStatus = await checkReadStatus(articleUrl, userId);
+      if (readStatus) {
+        updateButtonForReadStatus(readStatus.read, readStatus.date_read);
+      } else {
+        updateButtonForReadStatus(false, null);
+      }
+
+      // Reset button styles
+      button.style.backgroundColor = "";
+      button.style.color = "";
+      button.style.cursor = "";
+    }
+  });
+}
 
 console.log("Content script setup complete");
