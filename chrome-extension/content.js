@@ -1,5 +1,9 @@
 console.log("Content script loaded");
 
+// Define the SVG icons as constants
+const BOOKMARK_ICON = `<svg aria-hidden="true" focusable="false" data-prefix="far" data-icon="bookmark" class="svg-inline--fa fa-bookmark fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="14" height="14"><path fill="currentColor" d="M336 0H48C21.49 0 0 21.49 0 48v464l192-112 192 112V48c0-26.51-21.49-48-48-48zm0 428.43l-144-84-144 84V54a6 6 0 0 1 6-6h276c3.314 0 6 2.683 6 5.996V428.43z"></path></svg>`;
+const CHECK_ICON = `<svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="check" class="svg-inline--fa fa-check fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="14" height="14"><path fill="currentColor" d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"></path></svg>`;
+
 let currentArticleId = null;
 
 // Function to check the article's read status
@@ -198,25 +202,38 @@ function createButton() {
 
   button = document.createElement("button");
   button.id = "mark-as-read-button";
-  button.style.cssText = `
-        margin-left: 10px;
-        padding: 0 12px;
-        border: 1px solid #ccc;
-        background-color: #fff;
-        color: #0056b3;
-        cursor: pointer;
-        font-size: 16px;
-        font-family: Economist, sans-serif;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        height: 32px;
-        line-height: 32px;
-        border-radius: 4px;
-        text-decoration: none;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transition: background-color 0.3s ease;
-    `;
+  button.dataset.status = "unread"; // Set initial status
+
+  // Apply styles directly to the button
+  Object.assign(button.style, {
+    marginLeft: "10px",
+    padding: "6px 12px",
+    border: "2px solid #1d4f91",
+    backgroundColor: "white",
+    color: "#1d4f91",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontWeight: "500",
+    fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "32px",
+    borderRadius: "16px",
+    textDecoration: "none",
+    transition: "all 0.2s ease",
+  });
+
+  // Add hover effect
+  button.onmouseover = () => {
+    button.style.backgroundColor = "#f0f7ff";
+  };
+  button.onmouseout = () => {
+    button.style.backgroundColor = "white";
+  };
+
+  // Add icon and text
+  button.innerHTML = `<span style="margin-right: 6px; display: inline-flex;">${BOOKMARK_ICON}</span> Mark as Read`;
 
   // Find the "Save" button and its parent container
   const saveButton = document.querySelector('button[aria-label="Save"]');
@@ -320,20 +337,26 @@ function resetButtonToLoginState() {
 
 function updateButtonForReadStatus(status, date) {
   if (status) {
-    button.textContent = `Read on ${new Date(date).toLocaleDateString()}`;
-    button.onclick = () => {
-      if (confirm("Do you want to mark this article as unread?")) {
-        chrome.storage.local.get(["userId"], (result) => {
+    button.innerHTML = `<span style="margin-right: 6px; display: inline-flex;">${CHECK_ICON}</span> Read on ${new Date(
+      date
+    ).toLocaleDateString()}`;
+    button.dataset.status = "read";
+    button.style.backgroundColor = "#e1eeff";
+  } else {
+    button.innerHTML = `<span style="margin-right: 6px; display: inline-flex;">${BOOKMARK_ICON}</span> Mark as Read`;
+    button.dataset.status = "unread";
+    button.style.backgroundColor = "white";
+  }
+
+  button.onclick = () => {
+    chrome.storage.local.get(["userId"], (result) => {
+      if (status) {
+        if (confirm("Do you want to mark this article as unread?")) {
           updateArticle(currentArticleId, false, result.userId).then(() => {
             setButtonState();
           });
-        });
-      }
-    };
-  } else {
-    button.textContent = "Mark as Read";
-    button.onclick = () => {
-      chrome.storage.local.get(["userId"], (result) => {
+        }
+      } else {
         createOrUpdateReadStatus(
           window.location.href,
           true,
@@ -341,9 +364,9 @@ function updateButtonForReadStatus(status, date) {
         ).then(() => {
           setButtonState();
         });
-      });
-    };
-  }
+      }
+    });
+  };
 }
 
 // Update the setButtonState function to use updateButtonForReadStatus
@@ -357,28 +380,21 @@ async function setButtonState() {
 
     if (!userId || !userEmail) {
       console.log("User not logged in");
-      resetButtonToLoginState();
+      button.textContent = "Login to Track";
+      button.style.backgroundColor = "#f0f0f0";
+      button.style.color = "#333";
+      button.style.cursor = "pointer";
+      button.onclick = () => {
+        // Handle login action
+        console.log("Login action needed");
+      };
     } else {
       console.log("User logged in");
-      // Remove tooltip if it exists
-      const existingTooltip = document.getElementById("login-tooltip");
-      if (existingTooltip) {
-        console.log("Removing existing tooltip");
-        existingTooltip.remove();
-      }
-
-      // Check read status and update button
       const readStatus = await checkReadStatus(articleUrl, userId);
-      if (readStatus) {
-        updateButtonForReadStatus(readStatus.read, readStatus.date_read);
-      } else {
-        updateButtonForReadStatus(false, null);
-      }
-
-      // Reset button styles
-      button.style.backgroundColor = "";
-      button.style.color = "";
-      button.style.cursor = "";
+      updateButtonForReadStatus(
+        readStatus ? readStatus.read : false,
+        readStatus ? readStatus.date_read : null
+      );
     }
   });
 }
