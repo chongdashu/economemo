@@ -194,7 +194,6 @@ async function setButtonState() {
 // Function to create the button and attach it to the page
 function createButton() {
   console.log("Creating button");
-  // Check if the button already exists
   if (document.querySelector("#mark-as-read-button")) {
     console.log("Button already exists");
     return;
@@ -202,9 +201,8 @@ function createButton() {
 
   button = document.createElement("button");
   button.id = "mark-as-read-button";
-  button.dataset.status = "unread"; // Set initial status
+  button.dataset.status = "unread";
 
-  // Apply styles directly to the button
   Object.assign(button.style, {
     marginLeft: "10px",
     padding: "6px 12px",
@@ -221,21 +219,21 @@ function createButton() {
     height: "32px",
     borderRadius: "16px",
     textDecoration: "none",
-    transition: "all 0.2s ease",
+    transition: "all 0.3s ease",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
   });
 
-  // Add hover effect
   button.onmouseover = () => {
     button.style.backgroundColor = "#f0f7ff";
   };
   button.onmouseout = () => {
-    button.style.backgroundColor = "white";
+    button.style.backgroundColor =
+      button.dataset.status === "read" ? "#e1eeff" : "white";
   };
 
-  // Add icon and text
-  button.innerHTML = `<span style="margin-right: 6px; display: inline-flex;">${BOOKMARK_ICON}</span> Mark as Read`;
+  button.innerHTML = `<span style="margin-right: 6px; display: inline-flex;">${BOOKMARK_ICON}</span> <span class="button-text">Mark as Read</span>`;
 
-  // Find the "Save" button and its parent container
   const saveButton = document.querySelector('button[aria-label="Save"]');
   if (saveButton) {
     const buttonContainer = saveButton.parentNode;
@@ -336,16 +334,41 @@ function resetButtonToLoginState() {
 }
 
 function updateButtonForReadStatus(status, date) {
+  const iconSpan = button.querySelector("span:first-child");
+  const textSpan = button.querySelector(".button-text");
+
   if (status) {
-    button.innerHTML = `<span style="margin-right: 6px; display: inline-flex;">${CHECK_ICON}</span> Read on ${new Date(
-      date
-    ).toLocaleDateString()}`;
+    iconSpan.innerHTML = CHECK_ICON;
+    textSpan.textContent = `Read on ${new Date(date).toLocaleDateString()}`;
     button.dataset.status = "read";
+
+    // Start transition
+    button.style.width = `${button.offsetWidth}px`;
     button.style.backgroundColor = "#e1eeff";
+
+    // Force reflow
+    button.offsetHeight;
+
+    // Set final width
+    button.style.width = `${
+      textSpan.offsetWidth + iconSpan.offsetWidth + 24
+    }px`;
   } else {
-    button.innerHTML = `<span style="margin-right: 6px; display: inline-flex;">${BOOKMARK_ICON}</span> Mark as Read`;
+    iconSpan.innerHTML = BOOKMARK_ICON;
+    textSpan.textContent = "Mark as Read";
     button.dataset.status = "unread";
+
+    // Start transition
+    button.style.width = `${button.offsetWidth}px`;
     button.style.backgroundColor = "white";
+
+    // Force reflow
+    button.offsetHeight;
+
+    // Set final width
+    button.style.width = `${
+      textSpan.offsetWidth + iconSpan.offsetWidth + 24
+    }px`;
   }
 
   button.onclick = () => {
