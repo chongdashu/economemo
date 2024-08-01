@@ -7,6 +7,14 @@ POSTGRES_USER=
 POSTGRES_PASSWORD=
 POSTGRES_DB=
 POSTGRES_HOST=
+
+# Supabase Configuration
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Resend Configuration
+RESEND_API_KEY=re_CXsNdhJr_2PgnKDWVKKfqUPqxxvjgKQVM
 ```
 
 You can create debug SSL certs

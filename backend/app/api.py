@@ -10,7 +10,7 @@ class ArticleCreate(BaseModel):
 
 
 class ArticleUpdate(BaseModel):
-    read: bool
+    read: bool | None = None
     date_read: datetime | None = None
 
 
@@ -23,6 +23,13 @@ class ArticleResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Helper function for datetime serialization
+def serialize_datetime(obj):
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Type {type(obj)} not serializable")
+
+
 class UserCreate(BaseModel):
     email: str | None = None
     uuid: str | None = None
@@ -31,6 +38,3 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     id: str
     email: str | None = None
-    articles: list[ArticleResponse] = []
-
-    model_config = ConfigDict(from_attributes=True)
