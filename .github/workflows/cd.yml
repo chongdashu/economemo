@@ -7,21 +7,77 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - production
+      run_tests:
+        description: "Run tests before deployment"
+        required: true
+        default: true
+        type: boolean
 
 jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_tests }}
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v2
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+      - name: Run tests
+        run: pytest --maxfail=1 --disable-warnings -v
+      - name: Run mypy
+        run: mypy ./backend
+      - name: Run linting
+        run: ruff check ./backend
 
   deploy:
     name: Deploy to Environment
     needs: test
+    if: always()
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || (github.event_name == 'push' && 'dev') || (github.event_name == 'release' && 'production') }}
+
     steps:
       - uses: actions/checkout@v2
-      - name: Run a one-line script
-        run: echo Deploying to environment
+      - name: Deploy to EC2
+        env:
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          HOST: ${{ secrets.HOST }}
+          USER: ${{ secrets.USER }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          scp -i private_key -o StrictHostKeyChecking=no -r ./backend/* ${USER}@${HOST}:~/fastapi-app
+          ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
+            cd ~/fastapi-app &&
+            pip install -r requirements.txt &&
+            sudo systemctl restart fastapi-app
+          '
