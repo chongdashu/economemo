@@ -1,41 +1,75 @@
-name: Deploy Backend to Dev
+name: Deploy Backend
 
 on:
   push:
     branches:
       - master
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - production
 
 jobs:
   test:
-    # ... [Test job remains unchanged] ...
-
-  deploy-dev:
-    name: Deploy to Dev
-    needs: test
+    name: Run Tests
     runs-on: ubuntu-latest
-    environment: dev
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v2
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-2 # Adjust this to your AWS region
-
-      - name: Retrieve secrets from AWS
+          python-version: "3.11"
+      - name: Install dependencies
         run: |
-          echo "AWS_HOST=$(aws ssm get-parameter --name "/dev/AWS_HOST" --with-decryption --query "Parameter.Value" --output text)" >> $GITHUB_ENV
-          echo "AWS_USER=$(aws ssm get-parameter --name "/dev/AWS_USER" --with-decryption --query "Parameter.Value" --output text)" >> $GITHUB_ENV
-          aws ssm get-parameter --name "/dev/AWS_SSH_PRIVATE_KEY" --with-decryption --query "Parameter.Value" --output text > private_key
-          chmod 600 private_key
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+      - name: Run tests
+        run: pytest --maxfail=1 --disable-warnings -v
+      - name: Run mypy
+        run: mypy ./backend
+      - name: Run linting
+        run: ruff check ./backend
 
-      - name: Deploy to EC2 Dev
+  deploy:
+    name: Deploy to Environment
+    needs: test
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || (github.event_name == 'push' && 'dev') || (github.event_name == 'release' && 'production') }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Deploy to EC2
+        env:
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          HOST: ${{ secrets.HOST }}
+          USER: ${{ secrets.USER }}
         run: |
-          scp -i private_key -o StrictHostKeyChecking=no -r ./backend/* ${AWS_USER}@${AWS_HOST}:~/fastapi-app
-          ssh -i private_key -o StrictHostKeyChecking=no ${AWS_USER}@${AWS_HOST} '
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          scp -i private_key -o StrictHostKeyChecking=no -r ./backend/* ${USER}@${HOST}:~/fastapi-app
+          ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
             cd ~/fastapi-app &&
             pip install -r requirements.txt &&
             sudo systemctl restart fastapi-app
