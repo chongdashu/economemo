@@ -1,10 +1,16 @@
 FROM python:3.11
 
-WORKDIR /app
+# Set the working directory in the container
+WORKDIR /backend
 
-COPY requirements.txt .
+# Copy the backend directory contents into the container at /backend
+COPY . /backend
+
+# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Make port 8000 available to the world outside this container
+EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the FastAPI application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
