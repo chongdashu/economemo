@@ -40,7 +40,7 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: chongdashu/economemo-backend:${{ github.sha }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
 
       - name: Deploy to EC2
         env:
@@ -51,10 +51,16 @@ jobs:
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
 
           ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
-            docker pull chongdashu/economemo-backend:${{ github.sha }} &&
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest &&
             docker stop economemo-backend || true &&
             docker rm economemo-backend || true &&
-            docker run -d --name economemo-backend -p 8000:8000 chongdashu/economemo-backend:${{ github.sha }}
+            docker run -d --name economemo-backend \
+              -p 8000:8000 \
+              -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
+              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
+              -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
+              -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
+              ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
           '
 
           rm private_key
