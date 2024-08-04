@@ -64,3 +64,52 @@ jobs:
           '
 
           rm private_key
+      
+          - name: Deploy to EC2
+        env:
+          PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          HOST: ${{ secrets.AWS_HOST }}
+          USER: ${{ secrets.AWS_USER }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+
+          ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest &&
+            docker stop economemo-backend || true &&
+            docker rm economemo-backend || true &&
+            docker run -d --name economemo-backend \
+              -p 8000:8000 \
+              -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
+              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
+              -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
+              -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
+              ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
+          '
+
+      - name: Verify FastAPI server is running
+        env:
+          PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          HOST: ${{ secrets.AWS_HOST }}
+          USER: ${{ secrets.AWS_USER }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+
+          ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
+            start_time=$(date +%s)
+            end_time=$((start_time + 10))
+
+            while [ $(date +%s) -lt $end_time ]; do
+              echo "Verifying that FastAPI backend is up and running..."
+              if curl -sSf http://localhost:8000/health > /dev/null 2>&1; then
+                echo "FastAPI server is up and running!"
+                exit 0
+              fi
+              sleep 1
+            done
+
+            echo "Failed to verify server status after 10 seconds"
+            docker logs economemo-backend
+            exit 1
+          '
+
+          rm private_key
