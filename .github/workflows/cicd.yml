@@ -7,32 +7,18 @@ on:
   workflow_dispatch:
 
 jobs:
-  trigger-ci:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Trigger CI Workflow
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          event-type: run-ci
+  run-ci:
+    uses: ./.github/workflows/ci.yml
 
   wait-for-ci:
-    needs: trigger-ci
+    needs: run-ci
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for CI to complete
-        uses: lewagon/wait-on-check-action@v1.3.1
-        with:
-          ref: ${{ github.ref }}
-          check-name: "CI Success"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
+      - name: CI Completed
+        run: echo "CI workflow completed successfully"
 
-  trigger-cd:
+  run-cd:
     needs: wait-for-ci
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger CD Workflow
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          event-type: run-cd
+    uses: ./.github/workflows/cd.yml
+    with:
+      environment: "dev"

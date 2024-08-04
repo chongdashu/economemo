@@ -10,6 +10,7 @@ on:
       - feature/**
   repository_dispatch:
     types: [run-ci]
+  workflow_call:
   workflow_dispatch:
 
 jobs:
