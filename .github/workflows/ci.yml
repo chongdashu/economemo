@@ -1,14 +1,15 @@
-name: CI
+name: CI - Build and Test
 
 on:
   push:
     branches:
-      - master
       - feature/**
   pull_request:
     branches:
       - master
       - feature/**
+  repository_dispatch:
+    types: [run-ci]
   workflow_dispatch:
 
 jobs:
@@ -110,3 +111,10 @@ jobs:
         run: |
           cd frontend
           npm run build
+
+  ci-success:
+    name: CI Success
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "CI - build and test completed successfully!"

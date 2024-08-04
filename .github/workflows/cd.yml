@@ -1,11 +1,10 @@
-name: Deploy Backend with Docker
+name: CD - Deploy Backend
 
 on:
-  push:
-    branches:
-      - master
   release:
     types: [published]
+  repository_dispatch:
+    types: [run-cd]
   workflow_dispatch:
     inputs:
       environment:
