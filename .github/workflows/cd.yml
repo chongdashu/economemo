@@ -30,6 +30,12 @@ on:
         required: true
       POSTGRES_HOST:
         required: true
+      SSL_KEYFILE:
+        required: true
+      SSL_CERTFILE:
+        required: true
+      PORT:
+        required: true
   workflow_dispatch:
     inputs:
       environment:
@@ -75,6 +81,9 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+          PORT: ${{ secrets.PORT }}
+          SSL_KEYFILE: ${{ secrets.SSL_KEYFILE }}
+          SSL_CERTFILE: ${{ secrets.SSL_CERTFILE }}
 
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
@@ -83,32 +92,29 @@ jobs:
             docker stop economemo-backend || true &&
             docker rm economemo-backend || true &&
             docker run -d --name economemo-backend \
-              -p 8000:8000 \
+              -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
               -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
               -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
               -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
               -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
+              -e PORT="${{ secrets.PORT }}" \
+              -e SSL_KEYFILE="${{ secrets.SSL_KEYFILE }}" \
+              -e SSL_CERTFILE="${{ secrets.SSL_CERTFILE }}" \
               ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
 
-            echo "Debugging: Printing POSTGRES_HOST from container..."
-            docker exec economemo-backend printenv POSTGRES_HOST
-
             echo "Waiting for FastAPI server to start..."
-            sleep 5
+            sleep 10
 
-            start_time=$(date +%s)
-            end_time=$((start_time + 10))
-
-            while [ $(date +%s) -lt $end_time ]; do
-              echo "Verifying that FastAPI backend is up and running..."
+            for i in {1..6}; do
               if curl -sSf http://localhost:8000/health > /dev/null 2>&1; then
                 echo "FastAPI server is up and running!"
                 exit 0
               fi
-              sleep 1
+              echo "Attempt $i: Server not ready, waiting..."
+              sleep 10
             done
 
-            echo "Failed to verify server status after 10 seconds"
+            echo "Failed to verify server status after 1 minute"
             docker logs economemo-backend
             exit 1
           '
