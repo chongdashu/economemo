@@ -16,6 +16,20 @@ on:
         required: true
       DOCKERHUB_TOKEN:
         required: true
+      AWS_SSH_PRIVATE_KEY:
+        required: true
+      AWS_HOST:
+        required: true
+      AWS_USER:
+        required: true
+      POSTGRES_USER:
+        required: true
+      POSTGRES_PASSWORD:
+        required: true
+      POSTGRES_DB:
+        required: true
+      POSTGRES_HOST:
+        required: true
   workflow_dispatch:
     inputs:
       environment:
@@ -31,7 +45,7 @@ jobs:
   deploy:
     name: Deploy to Environment
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || (github.event_name == 'push' && 'dev') || (github.event_name == 'release' && 'production') }}
+    environment: ${{ inputs.environment || github.event.inputs.environment || (github.event_name == 'push' && 'dev') || (github.event_name == 'release' && 'production') }}
 
     steps:
       - uses: actions/checkout@v3
@@ -57,19 +71,22 @@ jobs:
           PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
           HOST: ${{ secrets.AWS_HOST }}
           USER: ${{ secrets.AWS_USER }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-
           ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest &&
             docker stop economemo-backend || true &&
             docker rm economemo-backend || true &&
             docker run -d --name economemo-backend \
               -p 8000:8000 \
-              -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
-              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
-              -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
-              -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
+              -e POSTGRES_USER="${POSTGRES_USER}" \
+              -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
+              -e POSTGRES_DB="${POSTGRES_DB}" \
+              -e POSTGRES_HOST="${POSTGRES_HOST}" \
               ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
 
             echo "Waiting for FastAPI server to start..."
@@ -91,5 +108,4 @@ jobs:
             docker logs economemo-backend
             exit 1
           '
-
           rm private_key
