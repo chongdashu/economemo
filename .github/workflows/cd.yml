@@ -93,6 +93,7 @@ jobs:
             docker rm economemo-backend || true &&
             docker run -d --name economemo-backend \
               -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
+              -v /etc/letsencrypt:/etc/letsencrypt:ro \
               -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
               -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
               -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
