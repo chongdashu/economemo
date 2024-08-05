@@ -107,9 +107,9 @@ jobs:
             sleep 10
 
             for i in {1..6}; do
-              if curl -sSf http://localhost:8000/health > /dev/null 2>&1; then
-                echo "FastAPI server is up and running!"
-                exit 0
+              if curl -sSf https://localhost:${{ secrets.PORT }}/health > /dev/null 2>&1; then
+                  echo "FastAPI server is up and running with HTTPS!"
+                  exit 0
               fi
               echo "Attempt $i: Server not ready, waiting..."
               sleep 10
