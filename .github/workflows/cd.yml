@@ -91,9 +91,21 @@ jobs:
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
           ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest &&
-            docker stop economemo-backend || true &&
-            docker rm economemo-backend || true &&
+            # Check available disk space
+            AVAILABLE_SPACE=$(df -h / | awk '"'"'NR==2 {print $4}'"'"' | sed '"'"'s/G//'"'"')
+            if (( $(echo "$AVAILABLE_SPACE < 5" | bc -l) )); then
+              echo "Low disk space. Cleaning up old Docker images and containers..."
+              docker system prune -af --volumes
+            fi
+
+            # Pull the new image
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
+
+            # Stop and remove the existing container if it exists
+            docker stop economemo-backend || true
+            docker rm economemo-backend || true
+
+            # Run the new container
             docker run -d --name economemo-backend \
               -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
               -v /etc/letsencrypt:/etc/letsencrypt:ro \
@@ -107,20 +119,15 @@ jobs:
               ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
 
             echo "Waiting for FastAPI server to start..."
-            sleep 10
+            sleep 30
 
-            for i in {1..6}; do
-              if curl -sSf -k https://localhost:${{ secrets.PORT }}/health > /dev/null 2>&1; then
-                  echo "FastAPI server is up and running with HTTPS!"
-                  exit 0
-              fi
-              echo "Attempt $i: Server not ready, waiting..."
-              sleep 10
-            done
-
-            echo "Failed to verify server status after 1 minute"
-            docker logs economemo-backend
-            exit 1
+            if curl -sSf -k https://localhost:${{ secrets.PORT }}/health > /dev/null 2>&1; then
+              echo "FastAPI server is up and running with HTTPS!"
+            else
+              echo "Failed to verify server status"
+              docker logs economemo-backend
+              exit 1
+            fi
           '
           rm private_key
 
