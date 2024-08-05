@@ -75,6 +75,7 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
           ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
@@ -88,6 +89,9 @@ jobs:
               -e POSTGRES_DB="${POSTGRES_DB}" \
               -e POSTGRES_HOST="${POSTGRES_HOST}" \
               ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
+
+            echo "Debugging: Printing POSTGRES_HOST from container..."
+            docker exec economemo-backend printenv POSTGRES_HOST
 
             echo "Waiting for FastAPI server to start..."
             sleep 5
