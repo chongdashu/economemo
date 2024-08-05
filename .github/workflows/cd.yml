@@ -84,10 +84,10 @@ jobs:
             docker rm economemo-backend || true &&
             docker run -d --name economemo-backend \
               -p 8000:8000 \
-              -e POSTGRES_USER="${POSTGRES_USER}" \
-              -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
-              -e POSTGRES_DB="${POSTGRES_DB}" \
-              -e POSTGRES_HOST="${POSTGRES_HOST}" \
+              -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
+              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
+              -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
+              -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
               ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
 
             echo "Debugging: Printing POSTGRES_HOST from container..."
