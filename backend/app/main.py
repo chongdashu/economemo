@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Any, Dict
 
 import uvicorn
 from dotenv import load_dotenv
@@ -12,19 +13,25 @@ from app.server import app
 # Load environment variables from .env file
 load_dotenv()
 
-if __name__ == "__main__":
-    ssl_keyfile = os.getenv("SSL_KEYFILE")
-    ssl_certfile = os.getenv("SSL_CERTFILE")
-    port = int(os.getenv("PORT", 8000))
 
-    uvicorn_config = {
-        "app": "app.server:app",
+def get_uvicorn_config() -> Dict[str, Any]:
+    config: Dict[str, Any] = {
+        "app": app,
         "host": "0.0.0.0",
-        "port": port,
+        "port": int(os.getenv("PORT", "8000")),
         "reload": os.getenv("ENVIRONMENT", "dev").lower() == "local",
     }
 
-    if ssl_keyfile and ssl_certfile:
-        uvicorn_config.update({"ssl_keyfile": ssl_keyfile, "ssl_certfile": ssl_certfile})
+    ssl_keyfile = os.getenv("SSL_KEYFILE")
+    ssl_certfile = os.getenv("SSL_CERTFILE")
 
+    if ssl_keyfile and ssl_certfile:
+        config["ssl_keyfile"] = ssl_keyfile
+        config["ssl_certfile"] = ssl_certfile
+
+    return config
+
+
+if __name__ == "__main__":
+    uvicorn_config = get_uvicorn_config()
     uvicorn.run(**uvicorn_config)
