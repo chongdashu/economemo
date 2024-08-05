@@ -35,3 +35,4 @@ jobs:
       SSL_KEYFILE: ${{ secrets.SSL_KEYFILE }}
       SSL_CERTFILE: ${{ secrets.SSL_CERTFILE }}
       PORT: ${{ secrets.PORT }}
+      DOMAIN: ${{ secrets.DOMAIN }}

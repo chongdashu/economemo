@@ -36,6 +36,9 @@ on:
         required: true
       PORT:
         required: true
+      DOMAIN:
+        required: true
+
   workflow_dispatch:
     inputs:
       environment:
