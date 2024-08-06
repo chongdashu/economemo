@@ -31,7 +31,7 @@ else:
 
 CHROME_EXTENSION_IDS = os.getenv("ALLOWED_EXTENSION_IDS", "").split(",")
 
-CORS_ORIGINS.append([f"chrome-extension://{chrome_extension_id}" for chrome_extension_id in CHROME_EXTENSION_IDS])
+CORS_ORIGINS.extend([f"chrome-extension://{chrome_extension_id}" for chrome_extension_id in CHROME_EXTENSION_IDS])
 
 app.add_middleware(
     CORSMiddleware,
