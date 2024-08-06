@@ -1,0 +1,12 @@
+{
+  "name": "economemo-extension",
+  "version": "0.1.0",
+  "scripts": {
+    "build:local": "NODE_ENV=local node build.js",
+    "build:dev": "NODE_ENV=dev node build.js",
+    "watch": "nodemon --watch src -e js,html,json --exec 'npm run build:local'"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
