@@ -64,6 +64,7 @@ jobs:
           POSTGRES_DB: testdb
           POSTGRES_HOST: localhost
           DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/testdb
+          ENVIRONMENT: local
 
       - name: Run mypy
         run: mypy ./backend
