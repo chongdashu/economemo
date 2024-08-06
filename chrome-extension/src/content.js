@@ -1,4 +1,4 @@
-console.log("Content script loaded");
+console.log("Content script loaded with API_URL:", config.apiUrl);
 
 // Define the SVG icons as constants
 const BOOKMARK_ICON = `<svg aria-hidden="true" focusable="false" data-prefix="far" data-icon="bookmark" class="svg-inline--fa fa-bookmark fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="14" height="14"><path fill="currentColor" d="M336 0H48C21.49 0 0 21.49 0 48v464l192-112 192 112V48c0-26.51-21.49-48-48-48zm0 428.43l-144-84-144 84V54a6 6 0 0 1 6-6h276c3.314 0 6 2.683 6 5.996V428.43z"></path></svg>`;
@@ -10,7 +10,7 @@ let currentArticleId = null;
 async function checkReadStatus(articleUrl, userId) {
   console.log("Checking read status for:", articleUrl);
   const response = await fetch(
-    `https://127.0.0.1:8000/articles/by-url?url=${encodeURIComponent(
+    `${config.apiUrl}/articles/by-url?url=${encodeURIComponent(
       articleUrl
     )}`,
     {
@@ -35,7 +35,7 @@ async function checkReadStatus(articleUrl, userId) {
 // Function to create a new article or update existing one
 async function createOrUpdateReadStatus(articleUrl, status, userId) {
   console.log("Creating/Updating read status for:", articleUrl);
-  const response = await fetch("https://127.0.0.1:8000/articles", {
+  const response = await fetch(`${config.apiUrl}/articles`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -57,7 +57,7 @@ async function createOrUpdateReadStatus(articleUrl, status, userId) {
 // Function to update an existing article
 async function updateArticle(articleId, readStatus, userId) {
   console.log("Updating article:", articleId);
-  const response = await fetch(`https://127.0.0.1:8000/articles/${articleId}`, {
+  const response = await fetch(`${config.apiUrl}/articles/${articleId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -350,9 +350,8 @@ function updateButtonForReadStatus(status, date) {
     button.offsetHeight;
 
     // Set final width
-    button.style.width = `${
-      textSpan.offsetWidth + iconSpan.offsetWidth + 24
-    }px`;
+    button.style.width = `${textSpan.offsetWidth + iconSpan.offsetWidth + 24
+      }px`;
   } else {
     iconSpan.innerHTML = BOOKMARK_ICON;
     textSpan.textContent = "Mark as Read";
@@ -366,9 +365,8 @@ function updateButtonForReadStatus(status, date) {
     button.offsetHeight;
 
     // Set final width
-    button.style.width = `${
-      textSpan.offsetWidth + iconSpan.offsetWidth + 24
-    }px`;
+    button.style.width = `${textSpan.offsetWidth + iconSpan.offsetWidth + 24
+      }px`;
   }
 
   button.onclick = () => {
@@ -390,36 +388,6 @@ function updateButtonForReadStatus(status, date) {
       }
     });
   };
-}
-
-// Update the setButtonState function to use updateButtonForReadStatus
-async function setButtonState() {
-  console.log("Setting button state");
-
-  chrome.storage.local.get(["userId", "userEmail"], async (result) => {
-    const userId = result.userId;
-    const userEmail = result.userEmail;
-    const articleUrl = window.location.href;
-
-    if (!userId || !userEmail) {
-      console.log("User not logged in");
-      button.textContent = "Login to Track";
-      button.style.backgroundColor = "#f0f0f0";
-      button.style.color = "#333";
-      button.style.cursor = "pointer";
-      button.onclick = () => {
-        // Handle login action
-        console.log("Login action needed");
-      };
-    } else {
-      console.log("User logged in");
-      const readStatus = await checkReadStatus(articleUrl, userId);
-      updateButtonForReadStatus(
-        readStatus ? readStatus.read : false,
-        readStatus ? readStatus.date_read : null
-      );
-    }
-  });
 }
 
 console.log("Content script setup complete");

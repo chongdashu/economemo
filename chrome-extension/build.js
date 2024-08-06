@@ -22,7 +22,7 @@ const config = {
     },
     dev: {
         name: "Economemo - Article Tracker (Dev)",
-        apiUrl: "https://dev-api.economemo.com",
+        apiUrl: "https://economemo-dev.twomustardbytes.com",
         hostPermissions: [
             "https://*.economist.com/*",
             "https://*.twomustardbytes.com/*"

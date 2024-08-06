@@ -16,8 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setLoggedOutState() {
-    statusElement.textContent =
-      "Not logged in. Create an account or log in to sync your read articles across devices.";
+    statusElement.textContent = "Not logged in. Create an account or log in to sync your read articles across devices.";
     emailForm.style.display = "block";
     logoutButton.style.display = "none";
     articleStatusElement.textContent = "";
@@ -48,8 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const activeTab = tabs[0];
       const articleUrl = activeTab.url;
-      const articleUrlPattern =
-        /^https:\/\/www\.economist\.com\/[a-z-]+\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+$/;
+      const articleUrlPattern = /^https:\/\/www\.economist\.com\/[a-z-]+\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+$/;
 
       if (articleUrlPattern.test(articleUrl)) {
         checkReadStatus(articleUrl);
@@ -70,40 +68,42 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const response = await fetch(
-        `https://127.0.0.1:8000/articles/by-url?url=${encodeURIComponent(
-          articleUrl
-        )}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "User-Id": userId,
-          },
-        }
-      );
+      try {
+        const response = await fetch(
+          `${config.apiUrl}/articles/by-url?url=${encodeURIComponent(articleUrl)}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "User-Id": userId,
+            },
+          }
+        );
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.length > 0 && data[0].read) {
-          articleStatusElement.textContent = `Read on ${new Date(
-            data[0].date_read
-          ).toLocaleDateString()}`;
-          actionButton.textContent = "Mark as Unread";
-          actionButton.onclick = () => {
-            if (confirm("Do you want to mark this article as unread?")) {
-              updateReadStatus(data[0].id, false, articleUrl);
-            }
-          };
+        if (response.ok) {
+          const data = await response.json();
+          if (data.length > 0 && data[0].read) {
+            articleStatusElement.textContent = `Read on ${new Date(data[0].date_read).toLocaleDateString()}`;
+            actionButton.textContent = "Mark as Unread";
+            actionButton.onclick = () => {
+              if (confirm("Do you want to mark this article as unread?")) {
+                updateReadStatus(data[0].id, false, articleUrl);
+              }
+            };
+          } else {
+            articleStatusElement.textContent = "Unread";
+            actionButton.textContent = "Mark as Read";
+            actionButton.onclick = () => {
+              createOrUpdateReadStatus(articleUrl, true);
+            };
+          }
+          actionButton.style.display = "block";
         } else {
-          articleStatusElement.textContent = "Unread";
-          actionButton.textContent = "Mark as Read";
-          actionButton.onclick = () => {
-            createOrUpdateReadStatus(articleUrl, true);
-          };
+          articleStatusElement.textContent = "Error checking article status";
+          actionButton.style.display = "none";
         }
-        actionButton.style.display = "block";
-      } else {
+      } catch (error) {
+        console.error("Error checking article status:", error);
         articleStatusElement.textContent = "Error checking article status";
         actionButton.style.display = "none";
       }
@@ -116,41 +116,44 @@ document.addEventListener("DOMContentLoaded", () => {
       const userId = result.userId;
       if (!userId) return;
 
-      const response = await fetch("https://127.0.0.1:8000/articles", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Id": userId,
-        },
-        body: JSON.stringify({
-          url: articleUrl,
-          read: status,
-          date_read: status ? new Date().toISOString() : null,
-        }),
-      });
+      try {
+        const response = await fetch(`${config.apiUrl}/articles`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "User-Id": userId,
+          },
+          body: JSON.stringify({
+            url: articleUrl,
+            read: status,
+            date_read: status ? new Date().toISOString() : null,
+          }),
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        checkReadStatus(articleUrl);
-        // Notify content script to update button
-        chrome.tabs.query(
-          { active: true, currentWindow: true },
-          function (tabs) {
+        if (response.ok) {
+          const data = await response.json();
+          checkReadStatus(articleUrl);
+          // Notify content script to update button
+          chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
             if (tabs[0]) {
               chrome.tabs.sendMessage(tabs[0].id, {
                 action: "updateReadStatus",
                 status: status,
                 date: status ? new Date().toISOString() : null,
-                articleId: data.id, // Send the article ID
+                articleId: data.id,
               });
             }
-          }
-        );
-      } else {
-        const errorText = await response.text();
-        errorMessageElement.textContent = `Error: ${errorText}`;
+          });
+        } else {
+          const errorText = await response.text();
+          errorMessageElement.textContent = `Error: ${errorText}`;
+          errorMessageElement.style.color = "red";
+          console.error("Failed to update read status:", errorText);
+        }
+      } catch (error) {
+        console.error("Error creating/updating read status:", error);
+        errorMessageElement.textContent = `Error: ${error.message}`;
         errorMessageElement.style.color = "red";
-        console.error("Failed to update read status:", errorText);
       }
     });
   }
@@ -161,9 +164,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const userId = result.userId;
       if (!userId) return;
 
-      const response = await fetch(
-        `https://127.0.0.1:8000/articles/${articleId}`,
-        {
+      try {
+        const response = await fetch(`${config.apiUrl}/articles/${articleId}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -173,30 +175,31 @@ document.addEventListener("DOMContentLoaded", () => {
             read: status,
             date_read: status ? new Date().toISOString() : null,
           }),
-        }
-      );
+        });
 
-      if (response.ok) {
-        checkReadStatus(articleUrl);
-        // Notify content script to update button
-        chrome.tabs.query(
-          { active: true, currentWindow: true },
-          function (tabs) {
+        if (response.ok) {
+          checkReadStatus(articleUrl);
+          // Notify content script to update button
+          chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
             if (tabs[0]) {
               chrome.tabs.sendMessage(tabs[0].id, {
                 action: "updateReadStatus",
                 status: status,
                 date: status ? new Date().toISOString() : null,
-                articleId: articleId, // Send the article ID
+                articleId: articleId,
               });
             }
-          }
-        );
-      } else {
-        const errorText = await response.text();
-        errorMessageElement.textContent = `Error: ${errorText}`;
+          });
+        } else {
+          const errorText = await response.text();
+          errorMessageElement.textContent = `Error: ${errorText}`;
+          errorMessageElement.style.color = "red";
+          console.error("Failed to update read status:", errorText);
+        }
+      } catch (error) {
+        console.error("Error updating read status:", error);
+        errorMessageElement.textContent = `Error: ${error.message}`;
         errorMessageElement.style.color = "red";
-        console.error("Failed to update read status:", errorText);
       }
     });
   }
@@ -208,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = emailInput.value;
 
     try {
-      const response = await fetch("https://127.0.0.1:8000/users/", {
+      const response = await fetch(`${config.apiUrl}/users/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -236,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = emailInput.value;
 
     try {
-      const response = await fetch("https://127.0.0.1:8000/login/", {
+      const response = await fetch(`${config.apiUrl}/login/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

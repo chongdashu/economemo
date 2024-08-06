@@ -3,24 +3,29 @@
 <head>
     <title>Economemo</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        #status { margin-bottom: 10px; }
-        #email-form { margin-bottom: 10px; }
-        #action-button { margin-top: 10px; display: none; }
-        #error-message { margin-top: 10px; color: red; }
+        body {
+            width: 300px;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+        }
+        button {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
+    <h1>Economemo</h1>
     <div id="status"></div>
     <form id="email-form">
-        <input type="email" id="email-input" placeholder="Enter email" required />
-        <button type="button" id="register-button">Register</button>
-        <button type="button" id="login-button">Login</button>
+        <input type="email" id="email-input" placeholder="Enter your email" required>
+        <button id="register-button">Register</button>
+        <button id="login-button">Login</button>
     </form>
     <button id="logout-button" style="display: none;">Logout</button>
     <div id="article-status"></div>
-    <button id="action-button"></button>
+    <button id="action-button" style="display: none;"></button>
     <div id="error-message"></div>
+    <script src="config.js"></script>
     <script src="popup.js"></script>
 </body>
 </html>
