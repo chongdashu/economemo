@@ -119,6 +119,7 @@ jobs:
               -e PORT="${{ secrets.PORT }}" \
               -e SSL_KEYFILE="${{ secrets.SSL_KEYFILE }}" \
               -e SSL_CERTFILE="${{ secrets.SSL_CERTFILE }}" \
+              -e CHROME_EXTENSION_ID="${{ secrets.CHROME_EXTENSION_ID }}" \
               ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
 
             echo "Waiting for FastAPI server to start..."
