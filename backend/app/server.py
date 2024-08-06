@@ -11,7 +11,6 @@ from app.models import Article, Base, User
 
 Base.metadata.create_all(bind=engine)
 
-CHROME_EXTENSION_ID = os.getenv("CHROME_EXTENSION_ID")
 app = FastAPI()
 
 # Get the environment
@@ -29,6 +28,10 @@ else:
         CORS_ORIGINS = [f"https://{domain}"]
     else:
         raise ValueError("DOMAIN environment variable is not set for non-local environment")
+
+CHROME_EXTENSION_ID = os.getenv("CHROME_EXTENSION_ID")
+if CHROME_EXTENSION_ID:
+    CORS_ORIGINS.append(f"chrome-extension://{CHROME_EXTENSION_ID}")
 
 # Allow CORS for the Chrome extension and the Economist website
 origins = CORS_ORIGINS

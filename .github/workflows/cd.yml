@@ -38,6 +38,8 @@ on:
         required: true
       DOMAIN:
         required: true
+      CHROME_EXTENSION_ID:
+        required: true
 
   workflow_dispatch:
     inputs:
@@ -87,6 +89,7 @@ jobs:
           PORT: ${{ secrets.PORT }}
           SSL_KEYFILE: ${{ secrets.SSL_KEYFILE }}
           SSL_CERTFILE: ${{ secrets.SSL_CERTFILE }}
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
 
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
