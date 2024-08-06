@@ -29,16 +29,13 @@ else:
     else:
         raise ValueError("DOMAIN environment variable is not set for non-local environment")
 
-CHROME_EXTENSION_ID = os.getenv("CHROME_EXTENSION_ID")
-if CHROME_EXTENSION_ID:
-    CORS_ORIGINS.append(f"chrome-extension://{CHROME_EXTENSION_ID}")
+CHROME_EXTENSION_IDS = os.getenv("ALLOWED_EXTENSION_IDS", "").split(",")
 
-# Allow CORS for the Chrome extension and the Economist website
-origins = CORS_ORIGINS
+CORS_ORIGINS.append([f"chrome-extension://{chrome_extension_id}" for chrome_extension_id in CHROME_EXTENSION_IDS])
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -36,4 +36,4 @@ jobs:
       SSL_CERTFILE: ${{ secrets.SSL_CERTFILE }}
       PORT: ${{ secrets.PORT }}
       DOMAIN: ${{ secrets.DOMAIN }}
-      CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+      CHROME_EXTENSION_IDS: ${{ secrets.CHROME_EXTENSION_IDS }}

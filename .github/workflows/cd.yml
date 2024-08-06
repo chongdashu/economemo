@@ -38,7 +38,7 @@ on:
         required: true
       DOMAIN:
         required: true
-      CHROME_EXTENSION_ID:
+      CHROME_EXTENSION_IDS:
         required: true
 
   workflow_dispatch:
@@ -89,7 +89,7 @@ jobs:
           PORT: ${{ secrets.PORT }}
           SSL_KEYFILE: ${{ secrets.SSL_KEYFILE }}
           SSL_CERTFILE: ${{ secrets.SSL_CERTFILE }}
-          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_EXTENSION_IDS: ${{ secrets.CHROME_EXTENSION_IDS }}
 
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
@@ -119,7 +119,7 @@ jobs:
               -e PORT="${{ secrets.PORT }}" \
               -e SSL_KEYFILE="${{ secrets.SSL_KEYFILE }}" \
               -e SSL_CERTFILE="${{ secrets.SSL_CERTFILE }}" \
-              -e CHROME_EXTENSION_ID="${{ secrets.CHROME_EXTENSION_ID }}" \
+              -e CHROME_EXTENSION_IDS="${{ secrets.CHROME_EXTENSION_IDS }}" \
               ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
 
             echo "Waiting for FastAPI server to start..."
