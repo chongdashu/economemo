@@ -14,13 +14,24 @@ Base.metadata.create_all(bind=engine)
 CHROME_EXTENSION_ID = os.getenv("CHROME_EXTENSION_ID")
 app = FastAPI()
 
+# Get the environment
+ENVIRONMENT = os.getenv("ENVIRONMENT", "dev").lower()
+
+if ENVIRONMENT == "local":
+    CORS_ORIGINS = [
+        "http://localhost:3000",
+        "https://127.0.0.1:8000",
+    ]
+else:
+    # For non-local environments, use the DOMAIN env var
+    domain = os.getenv("DOMAIN")
+    if domain:
+        CORS_ORIGINS = [f"https://{domain}"]
+    else:
+        raise ValueError("DOMAIN environment variable is not set for non-local environment")
+
 # Allow CORS for the Chrome extension and the Economist website
-origins = [
-    "https://www.economist.com",
-    f"chrome-extension://{CHROME_EXTENSION_ID}",
-    "https://127.0.0.1:8000",
-    "http://localhost:3000",
-]
+origins = CORS_ORIGINS
 
 app.add_middleware(
     CORSMiddleware,
