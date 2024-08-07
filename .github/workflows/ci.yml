@@ -114,9 +114,40 @@ jobs:
           cd frontend
           npm run build
 
+  chrome-extension:
+    name: Chrome Extension Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18"
+
+      - name: Cache npm packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-node-
+
+      - name: Install dependencies
+        run: |
+          cd chrome-extension
+          npm ci
+
+      - name: Run tests
+        run: |
+          cd chrome-extension
+          npm test
+
   ci-success:
     name: CI Success
-    needs: [backend, frontend]
+    needs: [backend, frontend, chrome-extension]
     runs-on: ubuntu-latest
     steps:
       - run: echo "CI - build and test completed successfully!"
