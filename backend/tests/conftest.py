@@ -1,12 +1,13 @@
 import os
 
 import pytest
-from app.db import Base
-from app.server import app, get_db
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from app.db import Base
+from app.server import app, get_db
 
 # Load environment variables from .env file
 load_dotenv()

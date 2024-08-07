@@ -1,8 +1,9 @@
 import pytest
-from app.models import User
-from app.server import app, get_db
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+
+from app.models import User
+from app.server import app, get_db
 
 client = TestClient(app)
 
