@@ -1,11 +1,30 @@
 {
-    "python.formatting.provider": "ruff",
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.formatOnSave": true,
-    "python.linting.enabled": true,
-    "python.linting.ruffEnabled": true,
-    "python.linting.ruffArgs": ["--config", "pyproject.toml"],
     "editor.codeActionsOnSave": {
-      "source.organizeImports": true
+      "source.organizeImports": "explicit",
+      "source.fixAll": "explicit"
     }
+  },
+  "ruff.path": ["./backend/.venv/bin/ruff"],
+  "ruff.organizeImports": true,
+  "ruff.lint.run": "onSave",
+  "ruff.format.args": ["--config", "${workspaceFolder}/backend/pyproject.toml"],
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
-  
+}
