@@ -4,9 +4,30 @@
   "scripts": {
     "build:local": "NODE_ENV=local node build.js",
     "build:dev": "NODE_ENV=dev node build.js",
-    "watch": "nodemon --watch src -e js,html,json --exec 'npm run build:local'"
+    "watch": "nodemon --watch src -e js,html,json --exec 'npm run build:local'",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.25.3",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.4.8",
+    "@types/jest": "^29.5.12",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "nodemon": "^2.0.22"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ],
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    }
   }
 }
