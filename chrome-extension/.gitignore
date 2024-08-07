@@ -49,5 +49,6 @@ yarn-error.log*
 /*.json
 # But don't ignore package.json and manifest files
 !package.json
+!package-lock.json
 !src/manifest.local.json
 !src/manifest.dev.json
