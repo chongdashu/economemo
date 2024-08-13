@@ -1,3 +1,5 @@
+#!/bin/bash
+
 import os
 import subprocess
 import sys

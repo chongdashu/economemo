@@ -6,8 +6,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.db import Base
-from app.server import app, get_db
+from app.db import Base, get_db
+from app.server import app
 
 # Load environment variables from .env file
 load_dotenv()
