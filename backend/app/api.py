@@ -5,22 +5,25 @@ from pydantic import BaseModel, ConfigDict
 
 class ArticleCreate(BaseModel):
     url: str
-    read: bool = False
+    date_first_accessed: datetime | None = None
+    date_last_accessed: datetime | None = None
     date_read: datetime | None = None
 
 
 class ArticleUpdate(BaseModel):
-    read: bool
+    date_last_accessed: datetime | None = None
     date_read: datetime | None = None
 
 
 class ArticleResponse(BaseModel):
     id: int
     url: str
-    read: bool
+    date_first_accessed: datetime
+    date_last_accessed: datetime
     date_read: datetime | None
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
 
 
 class UserCreate(BaseModel):

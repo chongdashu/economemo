@@ -25,13 +25,14 @@ def test_create_article(test_user):
         headers={"User-Id": test_user.id},
         json={
             "url": "http://example.com/article1",
-            "read": True,
-            "date_read": "2023-12-01T00:00:00Z",
+            "date_first_accessed": "2023-12-01T00:00:00",
+            "date_last_accessed": "2023-12-01T00:00:00",
+            "date_read": "2023-12-01T00:00:00",
         },
     )
     assert response.status_code == 200
     assert response.json()["url"] == "http://example.com/article1"
-    assert response.json()["read"]
+    assert response.json()["date_read"] is not None
 
 
 def test_read_articles(test_user):
@@ -41,8 +42,9 @@ def test_read_articles(test_user):
         headers={"User-Id": test_user.id},
         json={
             "url": "http://example.com/article1",
-            "read": True,
-            "date_read": "2023-12-01T00:00:00Z",
+            "date_first_accessed": "2023-12-01T00:00:00",
+            "date_last_accessed": "2023-12-01T00:00:00",
+            "date_read": "2023-12-01T00:00:00",
         },
     )
 
@@ -58,16 +60,15 @@ def test_read_article_by_url(test_user):
         headers={"User-Id": test_user.id},
         json={
             "url": "http://example.com/article2",
-            "read": True,
-            "date_read": "2023-12-01T00:00:00Z",
+            "date_first_accessed": "2023-12-01T00:00:00",
+            "date_last_accessed": "2023-12-01T00:00:00",
+            "date_read": "2023-12-01T00:00:00",
         },
     )
     article_url = create_response.json()["url"]
 
     # Now, test the read_article_by_url endpoint
-    response = client.get(
-        f"/articles/by-url?url={article_url}", headers={"User-Id": test_user.id}
-    )
+    response = client.get(f"/articles/by-url?url={article_url}", headers={"User-Id": test_user.id})
     assert response.status_code == 200
     articles = response.json()
     assert isinstance(articles, list)
@@ -82,8 +83,9 @@ def test_mark_article_as_unread(test_user):
         headers={"User-Id": test_user.id},
         json={
             "url": "http://example.com/article3",
-            "read": True,
-            "date_read": "2023-12-01T00:00:00Z",
+            "date_first_accessed": "2023-12-01T00:00:00",
+            "date_last_accessed": "2023-12-01T00:00:00",
+            "date_read": "2023-12-01T00:00:00",
         },
     )
     article_id = create_response.json()["id"]
@@ -93,13 +95,13 @@ def test_mark_article_as_unread(test_user):
         f"/articles/{article_id}",
         headers={"User-Id": test_user.id},
         json={
-            "read": False,
             "date_read": None,
+            "date_last_accessed": "2023-12-02T00:00:00",
         },
     )
     assert response.status_code == 200
-    assert not response.json()["read"]
     assert response.json()["date_read"] is None
+    assert response.json()["date_last_accessed"] == "2023-12-02T00:00:00"
 
 
 def test_mark_article_as_read_when_already_read(test_user):
@@ -109,23 +111,26 @@ def test_mark_article_as_read_when_already_read(test_user):
         headers={"User-Id": test_user.id},
         json={
             "url": "http://example.com/article4",
-            "read": True,
-            "date_read": "2023-12-01T00:00:00Z",
+            "date_first_accessed": "2023-12-01T00:00:00",
+            "date_last_accessed": "2023-12-01T00:00:00",
+            "date_read": "2023-12-01T00:00:00",
         },
     )
     article_id = create_response.json()["id"]
 
-    # Mark the article as read again
+    # Mark the article as read again with a new date
+    new_read_date = "2023-12-02T00:00:00"
     response = client.patch(
         f"/articles/{article_id}",
         headers={"User-Id": test_user.id},
         json={
-            "read": True,
-            "date_read": "2023-12-01T00:00:00Z",
+            "date_read": new_read_date,
+            "date_last_accessed": new_read_date,
         },
     )
     assert response.status_code == 200
-    assert response.json()["read"]
+    assert response.json()["date_read"] == new_read_date
+    assert response.json()["date_last_accessed"] == new_read_date
 
 
 def test_mark_article_as_unread_when_already_unread(test_user):
@@ -135,48 +140,52 @@ def test_mark_article_as_unread_when_already_unread(test_user):
         headers={"User-Id": test_user.id},
         json={
             "url": "http://example.com/article5",
-            "read": False,
+            "date_first_accessed": "2023-12-01T00:00:00",
+            "date_last_accessed": "2023-12-01T00:00:00",
             "date_read": None,
         },
     )
     article_id = create_response.json()["id"]
 
-    # Mark the article as unread again
+    # Try to mark the article as unread again
+    new_access_date = "2023-12-02T00:00:00"
     response = client.patch(
         f"/articles/{article_id}",
         headers={"User-Id": test_user.id},
         json={
-            "read": False,
             "date_read": None,
+            "date_last_accessed": new_access_date,
         },
     )
     assert response.status_code == 200
-    assert not response.json()["read"]
     assert response.json()["date_read"] is None
+    assert response.json()["date_last_accessed"] == new_access_date
 
 
-def test_mark_article_as_read_when_already_unread(test_user):
+def test_mark_article_as_read_when_previously_unread(test_user):
     # Create an article and mark it as unread
     create_response = client.post(
         "/articles/",
         headers={"User-Id": test_user.id},
         json={
             "url": "http://example.com/article6",
-            "read": False,
+            "date_first_accessed": "2023-12-01T00:00:00",
+            "date_last_accessed": "2023-12-01T00:00:00",
             "date_read": None,
         },
     )
     article_id = create_response.json()["id"]
 
     # Mark the article as read
+    new_read_date = "2023-12-02T00:00:00"
     response = client.patch(
         f"/articles/{article_id}",
         headers={"User-Id": test_user.id},
         json={
-            "read": True,
-            "date_read": "2023-12-01T00:00:00Z",
+            "date_read": new_read_date,
+            "date_last_accessed": new_read_date,
         },
     )
     assert response.status_code == 200
-    assert response.json()["read"]
-    assert response.json()["date_read"] == "2023-12-01T00:00:00"
+    assert response.json()["date_read"] == new_read_date
+    assert response.json()["date_last_accessed"] == new_read_date

@@ -1,5 +1,6 @@
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -90,10 +91,17 @@ def create_article(
     db_article = db.query(Article).filter(Article.url == article.url, Article.user_id == user_id).first()
 
     if db_article:
-        db_article.read = article.read
-        db_article.date_read = article.date_read
+        db_article.date_last_accessed = article.date_last_accessed or datetime.utcnow()
+        if article.date_read:
+            db_article.date_read = article.date_read
     else:
-        db_article = Article(**article.model_dump(), user_id=user_id)
+        db_article = Article(
+            url=article.url,
+            date_first_accessed=article.date_first_accessed or datetime.utcnow(),
+            date_last_accessed=article.date_last_accessed or datetime.utcnow(),
+            date_read=article.date_read,
+            user_id=user_id,
+        )
         db.add(db_article)
 
     db.commit()
@@ -116,8 +124,9 @@ def update_article(
     if db_article is None:
         raise HTTPException(status_code=404, detail="Article not found")
 
-    db_article.read = article.read
-    db_article.date_read = article.date_read
+    db_article.date_last_accessed = article.date_last_accessed or datetime.utcnow()
+    db_article.date_read = article.date_read  # This will set to None if article.date_read is None
+
     db.commit()
     db.refresh(db_article)
     return db_article
