@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -19,9 +20,9 @@ class Article(Base):
     __tablename__ = "articles"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     url: Mapped[str] = mapped_column(String, index=True)
-    date_first_accessed: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    date_last_accessed: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    date_read: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    date_first_accessed: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    date_last_accessed: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    date_read: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"))
 
     # Relationships
