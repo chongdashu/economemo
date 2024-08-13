@@ -4,13 +4,13 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import User
 
-from .api import UserCreate, UserResponse
+from .api import UserRequest, UserResponse
 
 router = APIRouter()
 
 
-@router.post("/users/", response_model=UserResponse)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
+@router.post("/user/register", response_model=UserResponse)
+def register_user(user: UserRequest, db: Session = Depends(get_db)):
     if user.email:
         existing_user = db.query(User).filter(User.email == user.email).first()
         if existing_user:
@@ -22,8 +22,8 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return db_user
 
 
-@router.post("/login/", response_model=UserResponse)
-def login(user: UserCreate, db: Session = Depends(get_db)):
+@router.post("/user/login", response_model=UserResponse)
+def login_user(user: UserRequest, db: Session = Depends(get_db)):
     if not user.email:
         raise HTTPException(status_code=400, detail="Email is required")
     db_user = db.query(User).filter(User.email == user.email).first()

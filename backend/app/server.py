@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.articles.route import router as article_router
 from app.db import database
 from app.health.route import router as health_router
-from app.users.route import router as user_router
+from app.user.route import router as user_router
 
 ################################################################################
 ## APP LIFECYCLE ##

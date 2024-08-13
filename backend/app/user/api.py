@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict
 from app.articles.api import ArticleResponse
 
 
-class UserCreate(BaseModel):
+class UserRequest(BaseModel):
     email: str | None = None
     uuid: str | None = None
 
