@@ -56,6 +56,12 @@ CHROME_EXTENSION_IDS = os.getenv("ALLOWED_EXTENSION_IDS", "").split(",")
 
 CORS_ORIGINS.extend([f"chrome-extension://{chrome_extension_id}" for chrome_extension_id in CHROME_EXTENSION_IDS])
 
+SUPPORTED_SITES = [
+    "https://www.economist.com",
+]
+
+CORS_ORIGINS.extend(SUPPORTED_SITES)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,

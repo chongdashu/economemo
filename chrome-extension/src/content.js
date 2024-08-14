@@ -10,9 +10,7 @@ let currentArticleId = null;
 async function checkReadStatus(articleUrl, userId) {
   console.log("Checking read status for:", articleUrl);
   const response = await fetch(
-    `${config.apiUrl}/articles/by-url?url=${encodeURIComponent(
-      articleUrl
-    )}`,
+    `${config.apiUrl}/articles/by-url?url=${encodeURIComponent(articleUrl)}`,
     {
       headers: {
         "User-Id": userId,
@@ -33,7 +31,7 @@ async function checkReadStatus(articleUrl, userId) {
 }
 
 // Function to create a new article or update existing one
-async function createOrUpdateReadStatus(articleUrl, status, userId) {
+async function createOrUpdateReadStatus(articleUrl, dateRead, userId) {
   console.log("Creating/Updating read status for:", articleUrl);
   const response = await fetch(`${config.apiUrl}/articles`, {
     method: "POST",
@@ -43,8 +41,7 @@ async function createOrUpdateReadStatus(articleUrl, status, userId) {
     },
     body: JSON.stringify({
       url: articleUrl,
-      read: status,
-      date_read: status ? new Date().toISOString() : null,
+      date_read: dateRead,
     }),
   });
   if (!response.ok) {
@@ -55,17 +52,16 @@ async function createOrUpdateReadStatus(articleUrl, status, userId) {
 }
 
 // Function to update an existing article
-async function updateArticle(articleId, readStatus, userId) {
+async function updateArticle(articleId, dateRead, userId) {
   console.log("Updating article:", articleId);
-  const response = await fetch(`${config.apiUrl}/articles/${articleId}`, {
+  const response = await fetch(`${config.apiUrl}/articles/${articleId}/read`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       "User-Id": userId,
     },
     body: JSON.stringify({
-      read: readStatus,
-      date_read: readStatus ? new Date().toISOString() : null,
+      date_read: dateRead,
     }),
   });
   if (!response.ok) {
@@ -163,13 +159,13 @@ async function setButtonState() {
 
       // Existing logged-in state logic
       const readStatus = await checkReadStatus(articleUrl, userId);
-      if (readStatus && readStatus.read) {
+      if (readStatus && readStatus.date_read) {
         button.textContent = `Read on ${new Date(
           readStatus.date_read
         ).toLocaleDateString()}`;
         button.onclick = () => {
           if (confirm("Do you want to mark this article as unread?")) {
-            updateArticle(readStatus.id, false, userId).then(() => {
+            updateArticle(readStatus.id, null, userId).then(() => {
               setButtonState();
             });
           }
@@ -177,7 +173,11 @@ async function setButtonState() {
       } else {
         button.textContent = "Mark as Read";
         button.onclick = () => {
-          createOrUpdateReadStatus(articleUrl, true, userId).then(() => {
+          createOrUpdateReadStatus(
+            articleUrl,
+            new Date().toISOString(),
+            userId
+          ).then(() => {
             setButtonState();
           });
         };
@@ -190,18 +190,23 @@ async function setButtonState() {
     }
   });
 }
-
 // Function to create the button and attach it to the page
 function createButton() {
   console.log("Creating button");
   if (document.querySelector("#mark-as-read-button")) {
     console.log("Button already exists");
-    return;
+    return document.querySelector("#mark-as-read-button");
   }
 
   button = document.createElement("button");
   button.id = "mark-as-read-button";
   button.dataset.status = "unread";
+
+  // Set initial button content
+  button.innerHTML = `
+    <span style="margin-right: 6px; display: inline-flex;">${BOOKMARK_ICON}</span>
+    <span class="button-text">Mark as Read</span>
+  `;
 
   Object.assign(button.style, {
     marginLeft: "10px",
@@ -224,16 +229,6 @@ function createButton() {
     overflow: "hidden",
   });
 
-  button.onmouseover = () => {
-    button.style.backgroundColor = "#f0f7ff";
-  };
-  button.onmouseout = () => {
-    button.style.backgroundColor =
-      button.dataset.status === "read" ? "#e1eeff" : "white";
-  };
-
-  button.innerHTML = `<span style="margin-right: 6px; display: inline-flex;">${BOOKMARK_ICON}</span> <span class="button-text">Mark as Read</span>`;
-
   const saveButton = document.querySelector('button[aria-label="Save"]');
   if (saveButton) {
     const buttonContainer = saveButton.parentNode;
@@ -248,8 +243,8 @@ function createButton() {
   }
 
   setButtonState();
+  return button;
 }
-
 // Function to observe DOM changes and initialize the button
 function observeDOM() {
   console.log("Observing DOM");
@@ -301,7 +296,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === "updateReadStatus") {
     console.log("Read status changed, updating button");
     currentArticleId = message.articleId; // Store the article ID from the message
-    updateButtonForReadStatus(message.status, message.date);
+
+    // Check if we're on an article page before updating the button
+    const articleUrlPattern =
+      /^https:\/\/www\.economist\.com\/[a-z-]+\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+$/;
+    if (articleUrlPattern.test(window.location.href)) {
+      updateButtonForReadStatus(message.status, message.date);
+    } else {
+      console.log("Not on an article page, skipping button update");
+    }
   }
 });
 
@@ -334,53 +337,52 @@ function resetButtonToLoginState() {
 }
 
 function updateButtonForReadStatus(status, date) {
-  const iconSpan = button.querySelector("span:first-child");
-  const textSpan = button.querySelector(".button-text");
+  console.log("Updating button for read status:", status, date);
 
-  if (status) {
-    iconSpan.innerHTML = CHECK_ICON;
-    textSpan.textContent = `Read on ${new Date(date).toLocaleDateString()}`;
-    button.dataset.status = "read";
-
-    // Start transition
-    button.style.width = `${button.offsetWidth}px`;
-    button.style.backgroundColor = "#e1eeff";
-
-    // Force reflow
-    button.offsetHeight;
-
-    // Set final width
-    button.style.width = `${textSpan.offsetWidth + iconSpan.offsetWidth + 24
-      }px`;
-  } else {
-    iconSpan.innerHTML = BOOKMARK_ICON;
-    textSpan.textContent = "Mark as Read";
-    button.dataset.status = "unread";
-
-    // Start transition
-    button.style.width = `${button.offsetWidth}px`;
-    button.style.backgroundColor = "white";
-
-    // Force reflow
-    button.offsetHeight;
-
-    // Set final width
-    button.style.width = `${textSpan.offsetWidth + iconSpan.offsetWidth + 24
-      }px`;
+  // Check if the button exists, if not, create it
+  if (!button) {
+    console.log("Button not found, creating it");
+    createButton();
   }
 
+  // If button still doesn't exist after trying to create it, log an error and return
+  if (!button) {
+    console.error("Failed to create or find the button");
+    return;
+  }
+
+  // Recreate the button content
+  button.innerHTML = `
+    <span style="margin-right: 6px; display: inline-flex;">
+      ${status ? CHECK_ICON : BOOKMARK_ICON}
+    </span>
+    <span class="button-text">
+      ${
+        status
+          ? `Read on ${new Date(date).toLocaleDateString()}`
+          : "Mark as Read"
+      }
+    </span>
+  `;
+
+  button.dataset.status = status ? "read" : "unread";
+
+  // Update button styles
+  button.style.backgroundColor = status ? "#e1eeff" : "white";
+
+  // Set the onclick event
   button.onclick = () => {
     chrome.storage.local.get(["userId"], (result) => {
       if (status) {
         if (confirm("Do you want to mark this article as unread?")) {
-          updateArticle(currentArticleId, false, result.userId).then(() => {
+          updateArticle(currentArticleId, null, result.userId).then(() => {
             setButtonState();
           });
         }
       } else {
         createOrUpdateReadStatus(
           window.location.href,
-          true,
+          new Date().toISOString(),
           result.userId
         ).then(() => {
           setButtonState();
@@ -388,6 +390,16 @@ function updateButtonForReadStatus(status, date) {
       }
     });
   };
+
+  // Update button hover effects
+  button.onmouseover = () => {
+    button.style.backgroundColor = status ? "#d0e0ff" : "#f0f7ff";
+  };
+  button.onmouseout = () => {
+    button.style.backgroundColor = status ? "#e1eeff" : "white";
+  };
+
+  console.log("Button updated successfully");
 }
 
 console.log("Content script setup complete");
