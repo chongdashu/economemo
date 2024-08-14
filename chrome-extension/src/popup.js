@@ -16,7 +16,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setLoggedOutState() {
-    statusElement.textContent = "Not logged in. Create an account or log in to sync your read articles across devices.";
+    statusElement.textContent =
+      "Not logged in. Create an account or log in to sync your read articles across devices.";
     emailForm.style.display = "block";
     logoutButton.style.display = "none";
     articleStatusElement.textContent = "";
@@ -47,7 +48,8 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const activeTab = tabs[0];
       const articleUrl = activeTab.url;
-      const articleUrlPattern = /^https:\/\/www\.economist\.com\/[a-z-]+\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+$/;
+      const articleUrlPattern =
+        /^https:\/\/www\.economist\.com\/[a-z-]+\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+$/;
 
       if (articleUrlPattern.test(articleUrl)) {
         checkReadStatus(articleUrl);
@@ -70,7 +72,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         const response = await fetch(
-          `${config.apiUrl}/articles/by-url?url=${encodeURIComponent(articleUrl)}`,
+          `${config.apiUrl}/articles/by-url?url=${encodeURIComponent(
+            articleUrl
+          )}`,
           {
             method: "GET",
             headers: {
@@ -82,19 +86,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (response.ok) {
           const data = await response.json();
-          if (data.length > 0 && data[0].read) {
-            articleStatusElement.textContent = `Read on ${new Date(data[0].date_read).toLocaleDateString()}`;
+          if (data.length > 0 && data[0].date_read) {
+            articleStatusElement.textContent = `Read on ${new Date(
+              data[0].date_read
+            ).toLocaleDateString()}`;
             actionButton.textContent = "Mark as Unread";
             actionButton.onclick = () => {
               if (confirm("Do you want to mark this article as unread?")) {
-                updateReadStatus(data[0].id, false, articleUrl);
+                updateReadStatus(data[0].id, null, articleUrl);
               }
             };
           } else {
             articleStatusElement.textContent = "Unread";
             actionButton.textContent = "Mark as Read";
             actionButton.onclick = () => {
-              createOrUpdateReadStatus(articleUrl, true);
+              createOrUpdateReadStatus(articleUrl, new Date().toISOString());
             };
           }
           actionButton.style.display = "block";
@@ -111,7 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Create or update read status
-  async function createOrUpdateReadStatus(articleUrl, status) {
+  async function createOrUpdateReadStatus(articleUrl, dateRead) {
     chrome.storage.local.get(["userId"], async (result) => {
       const userId = result.userId;
       if (!userId) return;
@@ -125,8 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
           },
           body: JSON.stringify({
             url: articleUrl,
-            read: status,
-            date_read: status ? new Date().toISOString() : null,
+            date_read: dateRead,
           }),
         });
 
@@ -134,16 +139,19 @@ document.addEventListener("DOMContentLoaded", () => {
           const data = await response.json();
           checkReadStatus(articleUrl);
           // Notify content script to update button
-          chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-            if (tabs[0]) {
-              chrome.tabs.sendMessage(tabs[0].id, {
-                action: "updateReadStatus",
-                status: status,
-                date: status ? new Date().toISOString() : null,
-                articleId: data.id,
-              });
+          chrome.tabs.query(
+            { active: true, currentWindow: true },
+            function (tabs) {
+              if (tabs[0]) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                  action: "updateReadStatus",
+                  status: !!dateRead,
+                  date: dateRead,
+                  articleId: data.id,
+                });
+              }
             }
-          });
+          );
         } else {
           const errorText = await response.text();
           errorMessageElement.textContent = `Error: ${errorText}`;
@@ -159,37 +167,42 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Update read status
-  async function updateReadStatus(articleId, status, articleUrl) {
+  async function updateReadStatus(articleId, dateRead, articleUrl) {
     chrome.storage.local.get(["userId"], async (result) => {
       const userId = result.userId;
       if (!userId) return;
 
       try {
-        const response = await fetch(`${config.apiUrl}/articles/${articleId}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            "User-Id": userId,
-          },
-          body: JSON.stringify({
-            read: status,
-            date_read: status ? new Date().toISOString() : null,
-          }),
-        });
+        const response = await fetch(
+          `${config.apiUrl}/articles/${articleId}/read`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              "User-Id": userId,
+            },
+            body: JSON.stringify({
+              date_read: dateRead,
+            }),
+          }
+        );
 
         if (response.ok) {
           checkReadStatus(articleUrl);
           // Notify content script to update button
-          chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-            if (tabs[0]) {
-              chrome.tabs.sendMessage(tabs[0].id, {
-                action: "updateReadStatus",
-                status: status,
-                date: status ? new Date().toISOString() : null,
-                articleId: articleId,
-              });
+          chrome.tabs.query(
+            { active: true, currentWindow: true },
+            function (tabs) {
+              if (tabs[0]) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                  action: "updateReadStatus",
+                  status: !!dateRead,
+                  date: dateRead,
+                  articleId: articleId,
+                });
+              }
             }
-          });
+          );
         } else {
           const errorText = await response.text();
           errorMessageElement.textContent = `Error: ${errorText}`;
@@ -211,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = emailInput.value;
 
     try {
-      const response = await fetch(`${config.apiUrl}/users/`, {
+      const response = await fetch(`${config.apiUrl}/user/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -239,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = emailInput.value;
 
     try {
-      const response = await fetch(`${config.apiUrl}/login/`, {
+      const response = await fetch(`${config.apiUrl}/user/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

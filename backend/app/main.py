@@ -8,15 +8,13 @@ from dotenv import load_dotenv
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.server import app
-
 # Load environment variables from .env file
 load_dotenv()
 
 
 def get_uvicorn_config() -> Dict[str, Any]:
     config: Dict[str, Any] = {
-        "app": app,
+        "app": "app.server:app",
         "host": "0.0.0.0",
         "port": int(os.getenv("PORT", "8000")),
         "reload": os.getenv("ENVIRONMENT", "dev").lower() == "local",
