@@ -209,21 +209,21 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     errorMessageElement.textContent = ""; // Clear any previous error messages
     const email = emailInput.value;
-
+  
     try {
-      const response = await fetch(`${config.apiUrl}/users/`, {
+      const response = await fetch(`${config.apiUrl}/user/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email }),
       });
-
+  
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText);
       }
-
+  
       const data = await response.json();
       updateLoginStatus(data.id, data.email);
     } catch (error) {
@@ -237,21 +237,21 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     errorMessageElement.textContent = ""; // Clear any previous error messages
     const email = emailInput.value;
-
+  
     try {
-      const response = await fetch(`${config.apiUrl}/login/`, {
+      const response = await fetch(`${config.apiUrl}/user/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email }),
       });
-
+  
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText);
       }
-
+  
       const data = await response.json();
       updateLoginStatus(data.id, data.email);
     } catch (error) {
