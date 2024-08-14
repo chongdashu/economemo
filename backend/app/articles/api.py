@@ -10,8 +10,11 @@ class ArticleCreate(BaseModel):
     date_read: datetime | None = None
 
 
-class ArticleUpdate(BaseModel):
-    date_last_accessed: datetime | None = None
+class ArticleUpdateLastAccessed(BaseModel):
+    date_last_accessed: datetime
+
+
+class ArticleUpdateDateRead(BaseModel):
     date_read: datetime | None = None
 
 
