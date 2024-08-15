@@ -90,6 +90,7 @@ jobs:
           SSL_KEYFILE: ${{ secrets.SSL_KEYFILE }}
           SSL_CERTFILE: ${{ secrets.SSL_CERTFILE }}
           CHROME_EXTENSION_IDS: ${{ secrets.CHROME_EXTENSION_IDS }}
+          DOMAIN: ${{ secrets.DOMAIN }}
       
         run: |
           set -e  # Exit immediately if any command fails
@@ -128,6 +129,7 @@ jobs:
               -e SSL_KEYFILE="${{ secrets.SSL_KEYFILE }}" \
               -e SSL_CERTFILE="${{ secrets.SSL_CERTFILE }}" \
               -e CHROME_EXTENSION_IDS="${{ secrets.CHROME_EXTENSION_IDS }}" \
+              -e DOMAIN="${{ secrets.DOMAIN }}" \
               ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
       
             echo "Waiting for FastAPI server to start..."
