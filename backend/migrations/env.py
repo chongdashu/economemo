@@ -4,6 +4,7 @@ from logging.config import fileConfig
 from pathlib import Path
 
 from alembic import context
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
 from app.models import Base
@@ -21,9 +22,20 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Set the database URL in the Alembic configuration
-db_url = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}/{os.getenv('POSTGRES_DB')}"
-config.set_main_option("sqlalchemy.url", db_url)
+load_dotenv()
+
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "")
+POSTGRES_DB = os.getenv("POSTGRES_DB")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT")
+
+print(POSTGRES_HOST)
+
+DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
+
 
 # add your model's MetaData object here
 # for 'autogenerate' support
