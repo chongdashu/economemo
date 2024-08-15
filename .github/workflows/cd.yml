@@ -92,6 +92,7 @@ jobs:
           CHROME_EXTENSION_IDS: ${{ secrets.CHROME_EXTENSION_IDS }}
 
         run: |
+          set -e  # Exit immediately if any command fails
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
           ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
             # Check available disk space
