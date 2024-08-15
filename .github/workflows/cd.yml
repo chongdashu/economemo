@@ -77,71 +77,71 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
 
-          - name: Deploy to EC2 and Verify FastAPI Server
-          env:
-            PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
-            HOST: ${{ secrets.AWS_HOST }}
-            USER: ${{ secrets.AWS_USER }}
-            POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-            POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-            POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-            POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
-            PORT: ${{ secrets.PORT }}
-            SSL_KEYFILE: ${{ secrets.SSL_KEYFILE }}
-            SSL_CERTFILE: ${{ secrets.SSL_CERTFILE }}
-            CHROME_EXTENSION_IDS: ${{ secrets.CHROME_EXTENSION_IDS }}
-        
-          run: |
-            set -e  # Exit immediately if any command fails
-            echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-            ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
-              # Check available disk space in MB
-              AVAILABLE_SPACE=$(df / | awk '"'"'NR==2 {print $4}'"'"')
-              
-              # If available space is less than 5GB (5000000KB)
-              if [ $AVAILABLE_SPACE -lt 5000000 ]; then
-                echo "Low disk space. Cleaning up old Docker images and containers..."
-                docker system prune -af --volumes
-              fi
-        
-              # Pull the new image with explicit error handling
-              PULL_OUTPUT=$(docker pull ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest 2>&1)
-              
-              if echo "$PULL_OUTPUT" | grep -q "no space left on device"; then
-                echo "Error: No space left on device during Docker pull."
-                exit 1
-              fi
-        
-              # Stop and remove the existing container if it exists
-              docker stop economemo-backend || true
-              docker rm economemo-backend || true
-        
-              # Run the new container
-              docker run -d --name economemo-backend \
-                -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
-                -v /etc/letsencrypt:/etc/letsencrypt:ro \
-                -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
-                -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
-                -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
-                -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
-                -e PORT="${{ secrets.PORT }}" \
-                -e SSL_KEYFILE="${{ secrets.SSL_KEYFILE }}" \
-                -e SSL_CERTFILE="${{ secrets.SSL_CERTFILE }}" \
-                -e CHROME_EXTENSION_IDS="${{ secrets.CHROME_EXTENSION_IDS }}" \
-                ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
-        
-              echo "Waiting for FastAPI server to start..."
-              sleep 30
-        
-              if curl -sSf -k https://localhost:${{ secrets.PORT }}/health > /dev/null 2>&1; then
-                echo "FastAPI server is up and running with HTTPS!"
-              else
-                echo "Failed to verify server status"
-                docker logs economemo-backend
-                exit 1
-              fi
-            '
-            rm private_key
+      - name: Deploy to EC2 and Verify FastAPI Server
+        env:
+          PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          HOST: ${{ secrets.AWS_HOST }}
+          USER: ${{ secrets.AWS_USER }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+          PORT: ${{ secrets.PORT }}
+          SSL_KEYFILE: ${{ secrets.SSL_KEYFILE }}
+          SSL_CERTFILE: ${{ secrets.SSL_CERTFILE }}
+          CHROME_EXTENSION_IDS: ${{ secrets.CHROME_EXTENSION_IDS }}
+      
+        run: |
+          set -e  # Exit immediately if any command fails
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
+            # Check available disk space in MB
+            AVAILABLE_SPACE=$(df / | awk '"'"'NR==2 {print $4}'"'"')
+            
+            # If available space is less than 5GB (5000000KB)
+            if [ $AVAILABLE_SPACE -lt 5000000 ]; then
+              echo "Low disk space. Cleaning up old Docker images and containers..."
+              docker system prune -af --volumes
+            fi
+      
+            # Pull the new image with explicit error handling
+            PULL_OUTPUT=$(docker pull ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest 2>&1)
+            
+            if echo "$PULL_OUTPUT" | grep -q "no space left on device"; then
+              echo "Error: No space left on device during Docker pull."
+              exit 1
+            fi
+      
+            # Stop and remove the existing container if it exists
+            docker stop economemo-backend || true
+            docker rm economemo-backend || true
+      
+            # Run the new container
+            docker run -d --name economemo-backend \
+              -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
+              -v /etc/letsencrypt:/etc/letsencrypt:ro \
+              -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
+              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
+              -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
+              -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
+              -e PORT="${{ secrets.PORT }}" \
+              -e SSL_KEYFILE="${{ secrets.SSL_KEYFILE }}" \
+              -e SSL_CERTFILE="${{ secrets.SSL_CERTFILE }}" \
+              -e CHROME_EXTENSION_IDS="${{ secrets.CHROME_EXTENSION_IDS }}" \
+              ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
+      
+            echo "Waiting for FastAPI server to start..."
+            sleep 30
+      
+            if curl -sSf -k https://localhost:${{ secrets.PORT }}/health > /dev/null 2>&1; then
+              echo "FastAPI server is up and running with HTTPS!"
+            else
+              echo "Failed to verify server status"
+              docker logs economemo-backend
+              exit 1
+            fi
+          '
+          rm private_key
         
 
       - name: Verify External Accessibility
