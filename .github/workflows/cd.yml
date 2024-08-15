@@ -30,6 +30,8 @@ on:
         required: true
       POSTGRES_HOST:
         required: true
+      POSTGRES_PORT:
+        required: true
       SSL_KEYFILE:
         required: true
       SSL_CERTFILE:
@@ -86,6 +88,7 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+          POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
           PORT: ${{ secrets.PORT }}
           SSL_KEYFILE: ${{ secrets.SSL_KEYFILE }}
           SSL_CERTFILE: ${{ secrets.SSL_CERTFILE }}
@@ -125,6 +128,7 @@ jobs:
               -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
               -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
               -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
+              -e POSTGRES_PORT="${{ secrets.POSTGRES_PORT }}" \
               -e PORT="${{ secrets.PORT }}" \
               -e SSL_KEYFILE="${{ secrets.SSL_KEYFILE }}" \
               -e SSL_CERTFILE="${{ secrets.SSL_CERTFILE }}" \
