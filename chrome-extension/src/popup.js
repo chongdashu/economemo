@@ -1,3 +1,5 @@
+import { isWhitelistedArticlePage } from './constants.js';
+
 document.addEventListener("DOMContentLoaded", () => {
   const statusElement = document.getElementById("status");
   const emailForm = document.getElementById("email-form");
@@ -48,13 +50,11 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const activeTab = tabs[0];
       const articleUrl = activeTab.url;
-      const articleUrlPattern =
-        /^https:\/\/www\.economist\.com\/[a-z-]+\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+$/;
 
-      if (articleUrlPattern.test(articleUrl)) {
+      if (isWhitelistedArticlePage(articleUrl)) {
         checkReadStatus(articleUrl);
       } else {
-        articleStatusElement.textContent = "No article detected";
+        articleStatusElement.textContent = "No supported article detected";
         actionButton.style.display = "none";
       }
     });

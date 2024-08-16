@@ -61,7 +61,7 @@ fs.writeFileSync(path.join(distDir, 'config.js'), configJs);
 console.log('config.js generated in dist folder');
 
 // Copy other necessary files to dist
-const filesToCopy = ['background.js', 'content.js', 'popup.html', 'popup.js'];
+const filesToCopy = ['background.js', 'content.js', 'popup.html', 'popup.js', 'constants.js'];
 filesToCopy.forEach(file => {
     const srcPath = path.join(srcDir, file);
     const distPath = path.join(distDir, file);
