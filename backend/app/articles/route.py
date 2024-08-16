@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.config import config
 from app.db import get_db
 from app.models import Article
 
@@ -11,7 +12,7 @@ from .api import ArticleCreate, ArticleResponse, ArticleUpdateDateRead, ArticleU
 router = APIRouter()
 
 
-@router.post("/articles/", response_model=ArticleResponse)
+@router.post("/articles/create", response_model=ArticleResponse)
 def create_article(
     article: ArticleCreate,
     user_id: str = Header(None, alias="User-Id"),
@@ -19,6 +20,9 @@ def create_article(
 ):
     if user_id is None:
         raise HTTPException(status_code=400, detail="User ID is required")
+
+    if not config.SupportedSites.is_supported(article.url):
+        raise HTTPException(status_code=400, detail="Unsupported website")
 
     db_article = db.query(Article).filter(Article.url == article.url, Article.user_id == user_id).first()
 

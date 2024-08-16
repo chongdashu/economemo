@@ -6,6 +6,8 @@ from app.db import get_db
 from app.models import User
 from app.server import app
 
+from .common import INVALID_ARTICLE_URL, VALID_ARTICLE_URL
+
 client = TestClient(app)
 
 
@@ -21,35 +23,71 @@ def test_user():
 
 
 def test_create_article(test_user):
-    response = client.post(
-        "/articles/",
-        headers={"User-Id": test_user.id},
-        json={
-            "url": "http://example.com/article1",
-            "date_first_accessed": "2023-12-01T00:00:00",
-            "date_last_accessed": "2023-12-01T00:00:00",
-        },
-    )
+    article_data = {
+        "url": VALID_ARTICLE_URL,
+        "date_first_accessed": "2023-08-16T12:00:00",
+        "date_last_accessed": "2023-08-16T12:00:00",
+        "date_read": "2023-08-16T12:30:00",
+    }
+    response = client.post("/articles/create", json=article_data, headers={"User-Id": test_user.id})
     assert response.status_code == 200
-    assert response.json()["url"] == "http://example.com/article1"
+    data = response.json()
+    assert data["url"] == article_data["url"]
+    assert data["date_read"] == article_data["date_read"]
 
-    article_id = response.json()["id"]
-    read_response = client.patch(
-        f"/articles/{article_id}/read",
-        headers={"User-Id": test_user.id},
-        json={"date_read": "2023-12-01T00:30:00"},
-    )
-    assert read_response.status_code == 200
-    assert read_response.json()["date_read"] is not None
+
+def test_create_article_unsupported_site(test_user):
+    article_data = {
+        "url": INVALID_ARTICLE_URL,
+        "date_first_accessed": "2023-08-16T12:00:00",
+        "date_last_accessed": "2023-08-16T12:00:00",
+    }
+    response = client.post("/articles/create", json=article_data, headers={"User-Id": test_user.id})
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Unsupported website"
+
+
+def test_create_article_no_user_id():
+    article_data = {
+        "url": VALID_ARTICLE_URL,
+        "date_first_accessed": "2023-08-16T12:00:00",
+        "date_last_accessed": "2023-08-16T12:00:00",
+    }
+    response = client.post("/articles/create", json=article_data)
+    assert response.status_code == 400
+    assert response.json()["detail"] == "User ID is required"
+
+
+def test_update_existing_article(test_user):
+    # First, create an article
+    article_data = {
+        "url": VALID_ARTICLE_URL,
+        "date_first_accessed": "2023-08-16T12:00:00",
+        "date_last_accessed": "2023-08-16T12:00:00",
+    }
+    client.post("/articles/create", json=article_data, headers={"User-Id": test_user.id})
+
+    # Now, update the article
+    update_data = {
+        "url": VALID_ARTICLE_URL,
+        "date_last_accessed": "2023-08-16T13:00:00",
+        "date_read": "2023-08-16T13:30:00",
+    }
+    response = client.post("/articles/create", json=update_data, headers={"User-Id": test_user.id})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["url"] == update_data["url"]
+    assert data["date_read"] == update_data["date_read"]
+    assert data["date_last_accessed"] == update_data["date_last_accessed"]
 
 
 def test_read_articles(test_user):
     # Create an article first
     create_response = client.post(
-        "/articles/",
+        "/articles/create/",
         headers={"User-Id": test_user.id},
         json={
-            "url": "http://example.com/article1",
+            "url": VALID_ARTICLE_URL,
             "date_first_accessed": "2023-12-01T00:00:00",
             "date_last_accessed": "2023-12-01T00:00:00",
         },
@@ -70,10 +108,10 @@ def test_read_articles(test_user):
 def test_read_article_by_url(test_user):
     # First, create an article
     create_response = client.post(
-        "/articles/",
+        "/articles/create/",
         headers={"User-Id": test_user.id},
         json={
-            "url": "http://example.com/article2",
+            "url": VALID_ARTICLE_URL,
             "date_first_accessed": "2023-12-01T00:00:00",
             "date_last_accessed": "2023-12-01T00:00:00",
         },
@@ -99,10 +137,10 @@ def test_read_article_by_url(test_user):
 def test_mark_article_as_unread(test_user):
     # Create and mark an article as read
     create_response = client.post(
-        "/articles/",
+        "/articles/create/",
         headers={"User-Id": test_user.id},
         json={
-            "url": "http://example.com/article3",
+            "url": VALID_ARTICLE_URL,
             "date_first_accessed": "2023-12-01T00:00:00",
             "date_last_accessed": "2023-12-01T00:00:00",
         },
@@ -137,10 +175,10 @@ def test_mark_article_as_unread(test_user):
 def test_mark_article_as_read_when_already_read(test_user):
     # Create and mark an article as read
     create_response = client.post(
-        "/articles/",
+        "/articles/create/",
         headers={"User-Id": test_user.id},
         json={
-            "url": "http://example.com/article4",
+            "url": VALID_ARTICLE_URL,
             "date_first_accessed": "2023-12-01T00:00:00",
             "date_last_accessed": "2023-12-01T00:00:00",
         },
@@ -168,10 +206,10 @@ def test_mark_article_as_read_when_already_read(test_user):
 def test_mark_article_as_unread_when_already_unread(test_user):
     # Create an article but don't mark it as read
     create_response = client.post(
-        "/articles/",
+        "/articles/create/",
         headers={"User-Id": test_user.id},
         json={
-            "url": "http://example.com/article5",
+            "url": VALID_ARTICLE_URL,
             "date_first_accessed": "2023-12-01T00:00:00",
             "date_last_accessed": "2023-12-01T00:00:00",
         },
@@ -201,10 +239,10 @@ def test_mark_article_as_unread_when_already_unread(test_user):
 def test_mark_article_as_read_when_previously_unread(test_user):
     # Create an article and mark it as unread
     create_response = client.post(
-        "/articles/",
+        "/articles/create/",
         headers={"User-Id": test_user.id},
         json={
-            "url": "http://example.com/article6",
+            "url": VALID_ARTICLE_URL,
             "date_first_accessed": "2023-12-01T00:00:00",
             "date_last_accessed": "2023-12-01T00:00:00",
         },

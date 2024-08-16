@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.server import app
 
+from .common import ANOTHER_VALID_ARTICLE_URL, VALID_ARTICLE_URL
+
 client = TestClient(app)
 
 
@@ -31,10 +33,10 @@ def test_new_user_reads_multiple_articles(db: Session):
 
     # Read first article
     article1_response = client.post(
-        "/articles/",
+        "/articles/create/",
         headers={"User-Id": user_id},
         json={
-            "url": "http://example.com/article1",
+            "url": VALID_ARTICLE_URL,
             "date_first_accessed": "2023-12-01T10:00:00",
             "date_last_accessed": "2023-12-01T10:00:00",
         },
@@ -50,10 +52,10 @@ def test_new_user_reads_multiple_articles(db: Session):
 
     # Read second article
     article2_response = client.post(
-        "/articles/",
+        "/articles/create",
         headers={"User-Id": user_id},
         json={
-            "url": "http://example.com/article2",
+            "url": ANOTHER_VALID_ARTICLE_URL,
             "date_first_accessed": "2023-12-02T14:00:00",
             "date_last_accessed": "2023-12-02T14:00:00",
         },
@@ -91,10 +93,10 @@ def test_user_marks_article_unread_then_read_again(db: Session):
 
     # Read an article
     article_response = client.post(
-        "/articles/",
+        "/articles/create",
         headers={"User-Id": user_id},
         json={
-            "url": "http://example.com/interesting_article",
+            "url": VALID_ARTICLE_URL,
             "date_first_accessed": "2023-12-05T09:00:00",
             "date_last_accessed": "2023-12-05T09:00:00",
         },
@@ -150,10 +152,10 @@ def test_user_accesses_article_multiple_times_before_reading(db: Session):
 
     # First access
     first_access_response = client.post(
-        "/articles/",
+        "/articles/create",
         headers={"User-Id": user_id},
         json={
-            "url": "http://example.com/long_article",
+            "url": VALID_ARTICLE_URL,
             "date_first_accessed": "2023-12-10T08:00:00",
             "date_last_accessed": "2023-12-10T08:00:00",
         },
@@ -185,7 +187,7 @@ def test_user_accesses_article_multiple_times_before_reading(db: Session):
     assert read_response.status_code == 200
 
     # Verify article history
-    article_response = client.get("/articles/by-url?url=http://example.com/long_article", headers={"User-Id": user_id})
+    article_response = client.get(f"/articles/by-url?url={VALID_ARTICLE_URL}", headers={"User-Id": user_id})
     assert article_response.status_code == 200
     article = article_response.json()[0]
     assert article["date_first_accessed"] == "2023-12-10T08:00:00"
@@ -209,10 +211,10 @@ def test_user_reads_article_from_multiple_devices(db: Session):
 
     # Access from first device (e.g., smartphone)
     smartphone_response = client.post(
-        "/articles/",
+        "/articles/create",
         headers={"User-Id": user_id},
         json={
-            "url": "http://example.com/tech_article",
+            "url": VALID_ARTICLE_URL,
             "date_first_accessed": "2023-12-15T07:00:00",
             "date_last_accessed": "2023-12-15T07:15:00",
         },
@@ -245,7 +247,7 @@ def test_user_reads_article_from_multiple_devices(db: Session):
     assert tablet_response.status_code == 200
 
     # Verify article status
-    article_response = client.get("/articles/by-url?url=http://example.com/tech_article", headers={"User-Id": user_id})
+    article_response = client.get(f"/articles/by-url?url={VALID_ARTICLE_URL}", headers={"User-Id": user_id})
     assert article_response.status_code == 200
     article = article_response.json()[0]
     assert article["date_first_accessed"] == "2023-12-15T07:00:00"
