@@ -1,6 +1,13 @@
-import { isWhitelistedArticlePage } from './constants.js';
+import {
+  checkArticleReadStatus,
+  createOrUpdateArticleReadStatus,
+  registerUser,
+  updateArticleReadStatus,
+} from "./api.js";
+import { getAuthHeaders } from "./auth.js";
+import { isWhitelistedArticlePage } from "./constants.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const statusElement = document.getElementById("status");
   const emailForm = document.getElementById("email-form");
   const emailInput = document.getElementById("email-input");
@@ -10,6 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const articleStatusElement = document.getElementById("article-status");
   const actionButton = document.getElementById("action-button");
   const errorMessageElement = document.getElementById("error-message");
+
+  // ---------------------------------------------------------------------------------
+  // User Login/Logout Status
+  // ---------------------------------------------------------------------------------
 
   function setLoggedInState(userEmail) {
     statusElement.textContent = `Logged in as ${userEmail}`;
@@ -41,18 +52,22 @@ document.addEventListener("DOMContentLoaded", () => {
       // Update popup UI
       setLoggedInState(userEmail);
       // Check article status after login
-      getCurrentTabUrl();
+      checkCurrentTabUrl();
     });
   }
 
+  // ---------------------------------------------------------------------------------
+  // Article URL and Read Status
+  // ---------------------------------------------------------------------------------
+
   // Get current tab URL and check article status
-  function getCurrentTabUrl() {
+  function checkCurrentTabUrl() {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const activeTab = tabs[0];
-      const articleUrl = activeTab.url;
+      const activeUrl = activeTab.url;
 
-      if (isWhitelistedArticlePage(articleUrl)) {
-        checkReadStatus(articleUrl);
+      if (isWhitelistedArticlePage(activeUrl)) {
+        checkReadStatus(activeUrl);
       } else {
         articleStatusElement.textContent = "No supported article detected";
         actionButton.style.display = "none";
@@ -62,160 +77,84 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Check article read status
   async function checkReadStatus(articleUrl) {
-    chrome.storage.local.get(["userId"], async (result) => {
-      const userId = result.userId;
-      if (!userId) {
-        articleStatusElement.textContent = "Log in to track article status";
-        actionButton.style.display = "none";
-        return;
-      }
-
-      try {
-        const response = await fetch(
-          `${config.apiUrl}/articles/by-url?url=${encodeURIComponent(
-            articleUrl
-          )}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "User-Id": userId,
-            },
+    try {
+      const data = await checkArticleReadStatus(articleUrl);
+      if (data.length > 0 && data[0].date_read) {
+        articleStatusElement.textContent = `Read on ${new Date(
+          data[0].date_read
+        ).toLocaleDateString()}`;
+        actionButton.textContent = "Mark as Unread";
+        actionButton.onclick = () => {
+          if (confirm("Do you want to mark this article as unread?")) {
+            updateReadStatus(data[0].id, null, articleUrl);
           }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.length > 0 && data[0].date_read) {
-            articleStatusElement.textContent = `Read on ${new Date(
-              data[0].date_read
-            ).toLocaleDateString()}`;
-            actionButton.textContent = "Mark as Unread";
-            actionButton.onclick = () => {
-              if (confirm("Do you want to mark this article as unread?")) {
-                updateReadStatus(data[0].id, null, articleUrl);
-              }
-            };
-          } else {
-            articleStatusElement.textContent = "Unread";
-            actionButton.textContent = "Mark as Read";
-            actionButton.onclick = () => {
-              createOrUpdateReadStatus(articleUrl, new Date().toISOString());
-            };
-          }
-          actionButton.style.display = "block";
-        } else {
-          articleStatusElement.textContent = "Error checking article status";
-          actionButton.style.display = "none";
-        }
-      } catch (error) {
-        console.error("Error checking article status:", error);
-        articleStatusElement.textContent = "Error checking article status";
-        actionButton.style.display = "none";
+        };
+      } else {
+        articleStatusElement.textContent = "Unread";
+        actionButton.textContent = "Mark as Read";
+        actionButton.onclick = () => {
+          createOrUpdateReadStatus(articleUrl, new Date().toISOString());
+        };
       }
-    });
+      actionButton.style.display = "block";
+    } catch (error) {
+      console.error("Error checking article status:", error);
+      articleStatusElement.textContent = "Error checking article status";
+      actionButton.style.display = "none";
+      errorMessageElement.textContent = `Error: ${error.message}`;
+      errorMessageElement.style.color = "red";
+    }
   }
 
   // Create or update read status
   async function createOrUpdateReadStatus(articleUrl, dateRead) {
-    chrome.storage.local.get(["userId"], async (result) => {
-      const userId = result.userId;
-      if (!userId) return;
-
-      try {
-        const response = await fetch(`${config.apiUrl}/articles`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "User-Id": userId,
-          },
-          body: JSON.stringify({
-            url: articleUrl,
-            date_read: dateRead,
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          checkReadStatus(articleUrl);
-          // Notify content script to update button
-          chrome.tabs.query(
-            { active: true, currentWindow: true },
-            function (tabs) {
-              if (tabs[0]) {
-                chrome.tabs.sendMessage(tabs[0].id, {
-                  action: "updateReadStatus",
-                  status: !!dateRead,
-                  date: dateRead,
-                  articleId: data.id,
-                });
-              }
-            }
-          );
-        } else {
-          const errorText = await response.text();
-          errorMessageElement.textContent = `Error: ${errorText}`;
-          errorMessageElement.style.color = "red";
-          console.error("Failed to update read status:", errorText);
+    try {
+      const data = await createOrUpdateArticleReadStatus(articleUrl, dateRead);
+      checkReadStatus(articleUrl);
+      // Notify content script to update button
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        if (tabs[0]) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action: "updateReadStatus",
+            status: !!dateRead,
+            date: dateRead,
+            articleId: data.id,
+          });
         }
-      } catch (error) {
-        console.error("Error creating/updating read status:", error);
-        errorMessageElement.textContent = `Error: ${error.message}`;
-        errorMessageElement.style.color = "red";
-      }
-    });
+      });
+    } catch (error) {
+      console.error("Error creating/updating read status:", error);
+      errorMessageElement.textContent = `Error: ${error.message}`;
+      errorMessageElement.style.color = "red";
+    }
   }
 
   // Update read status
   async function updateReadStatus(articleId, dateRead, articleUrl) {
-    chrome.storage.local.get(["userId"], async (result) => {
-      const userId = result.userId;
-      if (!userId) return;
-
-      try {
-        const response = await fetch(
-          `${config.apiUrl}/articles/${articleId}/read`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              "User-Id": userId,
-            },
-            body: JSON.stringify({
-              date_read: dateRead,
-            }),
-          }
-        );
-
-        if (response.ok) {
-          checkReadStatus(articleUrl);
-          // Notify content script to update button
-          chrome.tabs.query(
-            { active: true, currentWindow: true },
-            function (tabs) {
-              if (tabs[0]) {
-                chrome.tabs.sendMessage(tabs[0].id, {
-                  action: "updateReadStatus",
-                  status: !!dateRead,
-                  date: dateRead,
-                  articleId: articleId,
-                });
-              }
-            }
-          );
-        } else {
-          const errorText = await response.text();
-          errorMessageElement.textContent = `Error: ${errorText}`;
-          errorMessageElement.style.color = "red";
-          console.error("Failed to update read status:", errorText);
+    try {
+      await updateArticleReadStatus(articleId, dateRead);
+      checkReadStatus(articleUrl);
+      // Notify content script to update button
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        if (tabs[0]) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action: "updateReadStatus",
+            status: !!dateRead,
+            date: dateRead,
+            articleId: articleId,
+          });
         }
-      } catch (error) {
-        console.error("Error updating read status:", error);
-        errorMessageElement.textContent = `Error: ${error.message}`;
-        errorMessageElement.style.color = "red";
-      }
-    });
+      });
+    } catch (error) {
+      console.error("Error updating read status:", error);
+      errorMessageElement.textContent = `Error: ${error.message}`;
+      errorMessageElement.style.color = "red";
+    }
   }
+
+  // ---------------------------------------------------------------------------------
+  // Event Handlers
+  // ---------------------------------------------------------------------------------
 
   // Handle register
   registerButton.onclick = async (e) => {
@@ -224,20 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = emailInput.value;
 
     try {
-      const response = await fetch(`${config.apiUrl}/user/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
-      }
-
-      const data = await response.json();
+      const data = await registerUser({ email });
       updateLoginStatus(data.id, data.email);
     } catch (error) {
       errorMessageElement.textContent = `Error: ${error.message}`;
@@ -290,13 +216,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // Check initial login status and article status
-  chrome.storage.local.get(["userId", "userEmail"], (result) => {
-    if (result.userId && result.userEmail) {
-      setLoggedInState(result.userEmail);
-      getCurrentTabUrl();
-    } else {
-      setLoggedOutState();
-    }
-  });
+  // ---------------------------------------------------------------------------------
+  // Entry Point
+  // ---------------------------------------------------------------------------------
+
+  /**
+   * On popup load, check if user is logged in and get current tab
+   */
+  const headers = await getAuthHeaders();
+  if (headers["User-Id"] && headers["User-Email"]) {
+    setLoggedInState(headers["User-Email"]);
+    checkCurrentTabUrl();
+  } else {
+    setLoggedOutState();
+  }
 });
