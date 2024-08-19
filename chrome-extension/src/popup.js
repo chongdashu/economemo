@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Update popup UI
       setLoggedInState(userEmail);
       // Check article status after login
-      checkCurrentTabUrl();
+      checkCurrentTabArticleStatus();
     });
   }
 
@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ---------------------------------------------------------------------------------
 
   // Get current tab URL and check article status
-  function checkCurrentTabUrl() {
+  function checkCurrentTabArticleStatus() {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const activeTab = tabs[0];
       const activeUrl = activeTab.url;
@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         articleStatusElement.textContent = "Unread";
         actionButton.textContent = "Mark as Read";
         actionButton.onclick = () => {
-          createOrUpdateReadStatus(articleUrl, new Date().toISOString());
+          createOrUpdateArticle(articleUrl, new Date().toISOString());
         };
       }
       actionButton.style.display = "block";
@@ -106,8 +106,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Create or update read status
-  async function createOrUpdateReadStatus(articleUrl, dateRead) {
+  // Create or update an article's status
+  async function createOrUpdateArticle(articleUrl, dateRead) {
     try {
       const data = await createOrUpdateArticleReadStatus(articleUrl, dateRead);
       checkReadStatus(articleUrl);
@@ -226,7 +226,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const headers = await getAuthHeaders();
   if (headers["User-Id"] && headers["User-Email"]) {
     setLoggedInState(headers["User-Email"]);
-    checkCurrentTabUrl();
+    checkCurrentTabArticleStatus();
   } else {
     setLoggedOutState();
   }

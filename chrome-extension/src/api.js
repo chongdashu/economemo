@@ -1,4 +1,4 @@
-import { getAuthHeaders } from './auth.js';
+import { getAuthHeaders } from "./auth.js";
 
 /**
  * @typedef {Object} UserRegisterRequest
@@ -18,57 +18,56 @@ import { getAuthHeaders } from './auth.js';
  * @property {string|null} date_read - The date the article was read, or null if unread
  */
 
-
 /**
  * Registers a new user
- * @param {UserRegisterRequest} request - 
+ * @param {UserRegisterRequest} request -
  * @returns {Promise<UserRegisterResponse>}
  */
 export async function registerUser(request) {
-    const response = await fetch(`${config.apiUrl}/user/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
-  
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText);
-    }
-  
-    return response.json();
+  const response = await fetch(`${config.apiUrl}/user/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText);
   }
 
-  /**
+  return response.json();
+}
+
+/**
  * Checks the read status of an article
  * @param {string} articleUrl - The URL of the article to check
  * @returns {Promise<ArticleReadStatus[]>}
  */
 export async function checkArticleReadStatus(articleUrl) {
-    const headers = await getAuthHeaders();
-    if (!headers['User-Id']) {
-        throw new Error('User not logged in');
+  const headers = await getAuthHeaders();
+  if (!headers["User-Id"]) {
+    throw new Error("User not logged in");
+  }
+
+  const response = await fetch(
+    `${config.apiUrl}/articles/by-url?url=${encodeURIComponent(articleUrl)}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...headers,
+      },
     }
+  );
 
-    const response = await fetch(
-        `${config.apiUrl}/articles/by-url?url=${encodeURIComponent(articleUrl)}`,
-        {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                ...headers
-            },
-        }
-    );
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText);
+  }
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
-    }
-
-    return response.json();
+  return response.json();
 }
 
 /**
@@ -78,29 +77,29 @@ export async function checkArticleReadStatus(articleUrl) {
  * @returns {Promise<ArticleReadStatus>}
  */
 export async function createOrUpdateArticleReadStatus(articleUrl, dateRead) {
-    const headers = await getAuthHeaders();
-    if (!headers['User-Id']) {
-        throw new Error('User not logged in');
-    }
+  const headers = await getAuthHeaders();
+  if (!headers["User-Id"]) {
+    throw new Error("User not logged in");
+  }
 
-    const response = await fetch(`${config.apiUrl}/articles`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            ...headers
-        },
-        body: JSON.stringify({
-            url: articleUrl,
-            date_read: dateRead,
-        }),
-    });
+  const response = await fetch(`${config.apiUrl}/articles/create/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+    body: JSON.stringify({
+      url: articleUrl,
+      date_read: dateRead,
+    }),
+  });
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
-    }
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText);
+  }
 
-    return response.json();
+  return response.json();
 }
 
 /**
@@ -110,29 +109,26 @@ export async function createOrUpdateArticleReadStatus(articleUrl, dateRead) {
  * @returns {Promise<ArticleReadStatus>}
  */
 export async function updateArticleReadStatus(articleId, dateRead) {
-    const headers = await getAuthHeaders();
-    if (!headers['User-Id']) {
-        throw new Error('User not logged in');
-    }
+  const headers = await getAuthHeaders();
+  if (!headers["User-Id"]) {
+    throw new Error("User not logged in");
+  }
 
-    const response = await fetch(
-        `${config.apiUrl}/articles/${articleId}/read`,
-        {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                ...headers
-            },
-            body: JSON.stringify({
-                date_read: dateRead,
-            }),
-        }
-    );
+  const response = await fetch(`${config.apiUrl}/articles/${articleId}/read`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+    body: JSON.stringify({
+      date_read: dateRead,
+    }),
+  });
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
-    }
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText);
+  }
 
-    return response.json();
+  return response.json();
 }
