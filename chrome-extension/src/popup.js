@@ -1,6 +1,5 @@
 import {
   checkArticleReadStatus,
-  createOrUpdateArticleReadStatus,
   postArticleAccessed,
   registerUser,
   updateArticleReadStatus,
@@ -88,14 +87,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         actionButton.textContent = "Mark as Unread";
         actionButton.onclick = () => {
           if (confirm("Do you want to mark this article as unread?")) {
-            updateReadStatus(article.id, null, articleUrl);
+            updateReadStatus(article.id, false);
           }
         };
       } else {
         articleStatusElement.textContent = "Unread";
         actionButton.textContent = "Mark as Read";
         actionButton.onclick = () => {
-          createOrUpdateArticle(articleUrl, new Date().toISOString());
+          updateReadStatus(article.id, true);
         };
       }
       actionButton.style.display = "block";
@@ -119,14 +118,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         actionButton.textContent = "Mark as Unread";
         actionButton.onclick = () => {
           if (confirm("Do you want to mark this article as unread?")) {
-            updateReadStatus(data[0].id, null, articleUrl);
+            updateReadStatus(data[0].id, false);
           }
         };
       } else {
         articleStatusElement.textContent = "Unread";
         actionButton.textContent = "Mark as Read";
         actionButton.onclick = () => {
-          createOrUpdateArticle(articleUrl, new Date().toISOString());
+          updateReadStatus(data[0].id, true);
         };
       }
       actionButton.style.display = "block";
@@ -139,42 +138,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Create or update an article's status
-  async function createOrUpdateArticle(articleUrl, dateRead) {
-    try {
-      const data = await createOrUpdateArticleReadStatus(articleUrl, dateRead);
-      checkReadStatus(articleUrl);
-      // Notify content script to update button
-      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        if (tabs[0]) {
-          chrome.tabs.sendMessage(tabs[0].id, {
-            action: "updateReadStatus",
-            status: !!dateRead,
-            date: dateRead,
-            articleId: data.id,
-          });
-        }
-      });
-    } catch (error) {
-      console.error("Error creating/updating read status:", error);
-      errorMessageElement.textContent = `Error: ${error.message}`;
-      errorMessageElement.style.color = "red";
-    }
-  }
-
   // Update read status
-  async function updateReadStatus(articleId, dateRead, articleUrl) {
+  async function updateReadStatus(articleId, isRead) {
     try {
-      await updateArticleReadStatus(articleId, dateRead);
-      checkReadStatus(articleUrl);
+      console.log("Updating read status...");
+      const response = await updateArticleReadStatus(articleId, isRead);
+      checkCurrentTabArticleStatus();
+      console.log("response=%o", response);
+
       // Notify content script to update button
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         if (tabs[0]) {
           chrome.tabs.sendMessage(tabs[0].id, {
             action: "updateReadStatus",
-            status: !!dateRead,
-            date: dateRead,
-            articleId: articleId,
+            status: !!response.date_read,
+            date: response.date_read,
+            articleId: response.id,
           });
         }
       });

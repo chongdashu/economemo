@@ -18,6 +18,11 @@ import { getAuthHeaders } from "./auth.js";
  */
 
 /**
+ * @typedef {Object} ArticleReadRequest
+ * @property {boolean} read - Wheter the article is read or not
+ */
+
+/**
  * @typedef {Object} ArticleResponse
  * @property {number} id - The unique identifier for the article
  * @property {string} url - The URL of the article
@@ -144,10 +149,10 @@ export async function createOrUpdateArticleReadStatus(articleUrl, dateRead) {
 /**
  * Updates the read status of an existing article
  * @param {number} articleId - The ID of the article to update
- * @param {string|null} dateRead - The new date read, or null to mark as unread
+ * @param {bool} isRead - Is the article read or not
  * @returns {Promise<ArticleResponse>}
  */
-export async function updateArticleReadStatus(articleId, dateRead) {
+export async function updateArticleReadStatus(articleId, isRead) {
   const headers = await getAuthHeaders();
   if (!headers["User-Id"]) {
     throw new Error("User not logged in");
@@ -160,7 +165,7 @@ export async function updateArticleReadStatus(articleId, dateRead) {
       ...headers,
     },
     body: JSON.stringify({
-      date_read: dateRead,
+      read: isRead,
     }),
   });
 

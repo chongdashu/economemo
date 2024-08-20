@@ -7,7 +7,7 @@ from app.config import config
 from app.db import get_db
 from app.models import Article
 
-from .api import ArticleCreate, ArticleResponse, ArticleUpdateDateRead, ArticleUpdateLastAccessed
+from .api import ArticleCreate, ArticleMarkRead, ArticleResponse, ArticleUpdateLastAccessed
 
 router = APIRouter()
 
@@ -48,7 +48,7 @@ def create_article(
 @router.patch("/articles/{article_id}/read", response_model=ArticleResponse)
 def update_article_date_read(
     article_id: int,
-    article_update: ArticleUpdateDateRead,
+    article_update: ArticleMarkRead,
     user_id: str = Header(None, alias="User-Id"),
     db: Session = Depends(get_db),
 ):
@@ -60,12 +60,10 @@ def update_article_date_read(
     if db_article is None:
         raise HTTPException(status_code=404, detail="Article not found")
 
-    db_article.date_read = article_update.date_read
-    if article_update.date_read is not None:
-        db_article.date_last_accessed = article_update.date_read
-    else:
-        # If marking as unread, update date_last_accessed to current time
-        db_article.date_last_accessed = datetime.utcnow()
+    now = datetime.now(UTC)
+
+    db_article.date_read = now if article_update.read else None
+    db_article.date_last_accessed = now
 
     db.commit()
     db.refresh(db_article)
