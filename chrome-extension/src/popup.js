@@ -1,9 +1,4 @@
-import {
-  checkArticleReadStatus,
-  postArticleAccessed,
-  registerUser,
-  updateArticleReadStatus,
-} from "./api.js";
+import api from "./api.js";
 import { getAuthHeaders } from "./auth.js";
 import { isWhitelistedArticlePage } from "./constants.js";
 
@@ -79,7 +74,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Post article access
   async function postArticleAccess(articleUrl) {
     try {
-      const article = await postArticleAccessed(articleUrl);
+      const article = await api.postArticleAccessed(articleUrl);
       if (article.date_read) {
         articleStatusElement.textContent = `Read on ${new Date(
           article.date_read
@@ -108,9 +103,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Check article read status
-  async function checkReadStatus(articleUrl) {
+  async function checkArticleReadStatusByUrl(articleUrl) {
     try {
-      const data = await checkArticleReadStatus(articleUrl);
+      const data = await api.checkArticleReadStatus(articleUrl);
       if (data.length > 0 && data[0].date_read) {
         articleStatusElement.textContent = `Read on ${new Date(
           data[0].date_read
@@ -138,11 +133,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Update read status
+  /**
+   * Updates the read status of an article.
+   * @param {number} articleId - The ID of the article to update.
+   * @param {boolean} isRead - The new read status of the article.
+   * @returns {Promise<void>} - A promise that resolves when the status has been updated.
+   */
   async function updateReadStatus(articleId, isRead) {
     try {
       console.log("Updating read status...");
-      const response = await updateArticleReadStatus(articleId, isRead);
+      const response = await api.updateArticleReadStatus(articleId, isRead);
       checkCurrentTabArticleStatus();
       console.log("response=%o", response);
 
@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const email = emailInput.value;
 
     try {
-      const data = await registerUser({ email });
+      const data = await api.registerUser({ email });
       updateLoginStatus(data.id, data.email);
     } catch (error) {
       errorMessageElement.textContent = `Error: ${error.message}`;
