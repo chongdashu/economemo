@@ -102,37 +102,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Check article read status
-  async function checkArticleReadStatusByUrl(articleUrl) {
-    try {
-      const data = await api.checkArticleReadStatus(articleUrl);
-      if (data.length > 0 && data[0].date_read) {
-        articleStatusElement.textContent = `Read on ${new Date(
-          data[0].date_read
-        ).toLocaleDateString()}`;
-        actionButton.textContent = "Mark as Unread";
-        actionButton.onclick = () => {
-          if (confirm("Do you want to mark this article as unread?")) {
-            updateReadStatus(data[0].id, false);
-          }
-        };
-      } else {
-        articleStatusElement.textContent = "Unread";
-        actionButton.textContent = "Mark as Read";
-        actionButton.onclick = () => {
-          updateReadStatus(data[0].id, true);
-        };
-      }
-      actionButton.style.display = "block";
-    } catch (error) {
-      console.error("Error checking article status:", error);
-      articleStatusElement.textContent = "Error checking article status";
-      actionButton.style.display = "none";
-      errorMessageElement.textContent = `Error: ${error.message}`;
-      errorMessageElement.style.color = "red";
-    }
-  }
-
   /**
    * Updates the read status of an article.
    * @param {number} articleId - The ID of the article to update.

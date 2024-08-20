@@ -55,11 +55,11 @@ const api = {
   },
 
   /**
-   * Checks the read status of an article
+   * Retrieve article information by url
    * @param {string} articleUrl - The URL of the article to check
    * @returns {Promise<ArticleResponse[]>}
    */
-  async checkArticleReadStatus(articleUrl) {
+  async getArticleByUrl(articleUrl) {
     const headers = await getAuthHeaders();
     if (!headers["User-Id"]) {
       throw new Error("User not logged in");
