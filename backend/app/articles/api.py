@@ -11,11 +11,13 @@ class ArticleCreate(BaseModel):
 
 
 class ArticleUpdateLastAccessed(BaseModel):
-    date_last_accessed: datetime
+    url: str
+    create_if_not_exist: bool = False
 
 
 class ArticleUpdateDateRead(BaseModel):
     date_read: datetime | None = None
+    create_if_not_exists: bool = False
 
 
 class ArticleResponse(BaseModel):

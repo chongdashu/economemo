@@ -1,6 +1,7 @@
 import {
   checkArticleReadStatus,
   createOrUpdateArticleReadStatus,
+  postArticleAccessed,
   registerUser,
   updateArticleReadStatus,
 } from "./api.js";
@@ -67,12 +68,44 @@ document.addEventListener("DOMContentLoaded", async () => {
       const activeUrl = activeTab.url;
 
       if (isWhitelistedArticlePage(activeUrl)) {
-        checkReadStatus(activeUrl);
+        // checkReadStatus(activeUrl);
+        postArticleAccess(activeUrl);
       } else {
         articleStatusElement.textContent = "No supported article detected";
         actionButton.style.display = "none";
       }
     });
+  }
+
+  // Post article access
+  async function postArticleAccess(articleUrl) {
+    try {
+      const article = await postArticleAccessed(articleUrl);
+      if (article.date_read) {
+        articleStatusElement.textContent = `Read on ${new Date(
+          article.date_read
+        ).toLocaleDateString()}`;
+        actionButton.textContent = "Mark as Unread";
+        actionButton.onclick = () => {
+          if (confirm("Do you want to mark this article as unread?")) {
+            updateReadStatus(article.id, null, articleUrl);
+          }
+        };
+      } else {
+        articleStatusElement.textContent = "Unread";
+        actionButton.textContent = "Mark as Read";
+        actionButton.onclick = () => {
+          createOrUpdateArticle(articleUrl, new Date().toISOString());
+        };
+      }
+      actionButton.style.display = "block";
+    } catch (error) {
+      console.error("Error accessing article: ", error);
+      articleStatusElement.textContent = "Error accessing article";
+      actionButton.style.display = "none";
+      errorMessageElement.textContent = `Error: ${error.message}`;
+      errorMessageElement.style.color = "red";
+    }
   }
 
   // Check article read status
