@@ -33,14 +33,14 @@ def test_new_user_reads_multiple_articles(db: Session):
 
     # Read first article
     article1_response = client.post(
-        "/articles/assess/",
+        "/articles/access/",
         headers={"User-Id": user_id},
         json={
             "url": VALID_ARTICLE_URL,
             "create_if_not_exist": True,
         },
     )
-    assert article1_response.status_code == 200
+    assert article1_response.status_code == 200, "first article failed access"
     article1_id = article1_response.json()["id"]
 
     client.patch(
@@ -51,26 +51,25 @@ def test_new_user_reads_multiple_articles(db: Session):
 
     # Read second article
     article2_response = client.post(
-        "/articles/create",
+        "/articles/access/",
         headers={"User-Id": user_id},
         json={
             "url": ANOTHER_VALID_ARTICLE_URL,
-            "date_first_accessed": "2023-12-02T14:00:00",
-            "date_last_accessed": "2023-12-02T14:00:00",
+            "create_if_not_exist": True,
         },
     )
-    assert article2_response.status_code == 200
+    assert article2_response.status_code == 200, "second article failed creation"
     article2_id = article2_response.json()["id"]
 
     client.patch(
         f"/articles/{article2_id}/read",
         headers={"User-Id": user_id},
-        json={"date_read": "2023-12-02T14:45:00"},
+        json={"read": True},
     )
 
     # Verify reading history
-    history_response = client.get("/articles/", headers={"User-Id": user_id})
-    assert history_response.status_code == 200
+    history_response = client.get("/articles/all", headers={"User-Id": user_id})
+    assert history_response.status_code == 200, "failed to get all articles"
     history = history_response.json()
     assert len(history) == 2
     assert all(article["date_read"] is not None for article in history)
