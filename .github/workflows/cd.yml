@@ -131,7 +131,7 @@ jobs:
             docker rm economemo-backend || true
 
             # Run the new container
-            docker run -d --name economemo-backend \
+            docker run --pull always -d --name economemo-backend \
               -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
               -v /etc/letsencrypt:/etc/letsencrypt:ro \
               -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
