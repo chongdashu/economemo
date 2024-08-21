@@ -128,7 +128,7 @@ jobs:
             fi
 
             # Pull the new image
-            docker pull $DOCKERHUB_USERNAME/economemo-backend:latest
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
 
             # Stop and remove the existing container if it exists
             docker stop economemo-backend || true
@@ -153,7 +153,7 @@ jobs:
             echo "Waiting for FastAPI server to start..."
             sleep 30
 
-            if curl -sSf -k https://localhost:$PORT/health > /dev/null 2>&1; then
+            if curl -sSf -k https://localhost:${{ secrets.PORT }}/health > /dev/null 2>&1; then
               echo "FastAPI server is up and running with HTTPS!"
             else
               echo "Failed to verify server status"
