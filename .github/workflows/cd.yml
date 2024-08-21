@@ -62,6 +62,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Ensure that the full history is fetched, not just a single commit
+
+      - name: Verify latest code is checked out
+        run: |
+          echo "The latest commit is:"
+          git log -1
+          echo "Contents of backend/app/articles/api.py:"
+          cat backend/app/articles/api.py
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
