@@ -113,7 +113,11 @@ jobs:
           set -e  # Exit immediately if any command fails
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
           ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
-            echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+            export DOCKERHUB_USERNAME='${DOCKERHUB_USERNAME}'
+            export DOCKERHUB_TOKEN='${DOCKERHUB_TOKEN}'
+
+            # Perform Docker login
+            echo "\$DOCKERHUB_TOKEN" | docker login --username "\$DOCKERHUB_USERNAME" --password-stdin
 
             # Check available disk space in MB
             AVAILABLE_SPACE=$(df / | awk '"'"'NR==2 {print $4}'"'"')
