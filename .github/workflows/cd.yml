@@ -96,6 +96,8 @@ jobs:
           PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
           HOST: ${{ secrets.AWS_HOST }}
           USER: ${{ secrets.AWS_USER }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
@@ -119,6 +121,9 @@ jobs:
               echo "Low disk space. Cleaning up old Docker images and containers..."
               docker system prune -af --volumes
             fi
+
+            # Login to Docker Hub
+            echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
             # Pull the latest image from Docker Hub
             echo "Pulling the latest Docker image..."
