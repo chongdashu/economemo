@@ -10,7 +10,7 @@ from .common import ANOTHER_VALID_ARTICLE_URL, VALID_ARTICLE_URL
 client = TestClient(app)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def db():
     db = next(get_db())
     yield db
@@ -33,12 +33,11 @@ def test_new_user_reads_multiple_articles(db: Session):
 
     # Read first article
     article1_response = client.post(
-        "/articles/create/",
+        "/articles/assess/",
         headers={"User-Id": user_id},
         json={
             "url": VALID_ARTICLE_URL,
-            "date_first_accessed": "2023-12-01T10:00:00",
-            "date_last_accessed": "2023-12-01T10:00:00",
+            "create_if_not_exist": True,
         },
     )
     assert article1_response.status_code == 200
@@ -47,7 +46,7 @@ def test_new_user_reads_multiple_articles(db: Session):
     client.patch(
         f"/articles/{article1_id}/read",
         headers={"User-Id": user_id},
-        json={"date_read": "2023-12-01T10:30:00"},
+        json={"read": True},
     )
 
     # Read second article

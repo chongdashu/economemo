@@ -1,52 +1,70 @@
 alembic==1.13.2
-annotated-types==0.7.0
-anyio==4.4.0
+annotated-types @ file:///home/conda/feedstock_root/build_artifacts/annotated-types_1716290248287/work
+anyio @ file:///home/conda/feedstock_root/build_artifacts/anyio_1717693030552/work
 async-timeout==4.0.3
 asyncpg==0.29.0
-certifi==2024.6.2
-click==8.1.7
-databases==0.9.0
-dnspython==2.6.1
-email_validator==2.2.0
-fastapi==0.111.0
-fastapi-cli==0.0.4
-greenlet==3.0.3
-h11==0.14.0
-httpcore==1.0.5
+certifi @ file:///home/conda/feedstock_root/build_artifacts/certifi_1718025014955/work/certifi
+click @ file:///home/conda/feedstock_root/build_artifacts/click_1692311806742/work
+databases @ file:///home/conda/feedstock_root/build_artifacts/databases_1711142214503/work
+deprecation==2.1.0
+dnspython @ file:///home/conda/feedstock_root/build_artifacts/dnspython_1709190728464/work
+email_validator @ file:///home/conda/feedstock_root/build_artifacts/email-validator-meta_1718984626658/work
+exceptiongroup @ file:///home/conda/feedstock_root/build_artifacts/exceptiongroup_1704921103267/work
+fastapi @ file:///home/conda/feedstock_root/build_artifacts/fastapi_1715196982285/work
+fastapi-cli @ file:///home/conda/feedstock_root/build_artifacts/fastapi-cli_1716205772095/work
+freezegun==1.5.1
+gotrue==2.6.2
+greenlet @ file:///home/conda/feedstock_root/build_artifacts/greenlet_1703201578921/work
+h11 @ file:///home/conda/feedstock_root/build_artifacts/h11_1664132893548/work
+h2 @ file:///home/conda/feedstock_root/build_artifacts/h2_1634280454336/work
+hpack==4.0.0
+httpcore @ file:///home/conda/feedstock_root/build_artifacts/httpcore_1711596990900/work
 httptools==0.6.1
-httpx==0.27.0
-idna==3.7
+httpx @ file:///home/conda/feedstock_root/build_artifacts/httpx_1708530890843/work
+hyperframe @ file:///home/conda/feedstock_root/build_artifacts/hyperframe_1619110129307/work
+idna @ file:///home/conda/feedstock_root/build_artifacts/idna_1713279365350/work
 iniconfig==2.0.0
 itsdangerous==2.2.0
-Jinja2==3.1.4
-markdown-it-py==3.0.0
-MarkupSafe==2.1.5
-mdurl==0.1.2
+Jinja2 @ file:///home/conda/feedstock_root/build_artifacts/jinja2_1715127149914/work
+Mako==1.3.5
+markdown-it-py @ file:///home/conda/feedstock_root/build_artifacts/markdown-it-py_1686175045316/work
+MarkupSafe @ file:///home/conda/feedstock_root/build_artifacts/markupsafe_1706899926732/work
+mdurl @ file:///home/conda/feedstock_root/build_artifacts/mdurl_1704317613764/work
 mypy==1.10.1
 mypy-extensions==1.0.0
-orjson==3.10.6
+orjson @ file:///home/conda/feedstock_root/build_artifacts/orjson_1719968929301/work/target/wheels/orjson-3.10.6-cp311-cp311-linux_x86_64.whl#sha256=80d5508a818ceec65fe188abf1df850618fbee246f28b4187e9f7716326888f7
 packaging==24.1
 pluggy==1.5.0
-psycopg2-binary==2.9.9
-pydantic==2.8.0
+postgrest==0.16.9
+psycopg2 @ file:///home/conda/feedstock_root/build_artifacts/psycopg2-split_1701737563045/work
+psycopg2-binary @ file:///home/conda/feedstock_root/build_artifacts/psycopg2-split_1701737547976/work/psycopg2-binary
+pydantic @ file:///home/conda/feedstock_root/build_artifacts/pydantic_1719866985540/work
 pydantic-extra-types==2.9.0
 pydantic-settings==2.3.4
-pydantic_core==2.20.0
-Pygments==2.18.0
+pydantic_core @ file:///home/conda/feedstock_root/build_artifacts/pydantic-core_1719498849951/work
+Pygments @ file:///home/conda/feedstock_root/build_artifacts/pygments_1714846767233/work
 pytest==8.2.2
+python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
-python-multipart==0.0.9
+python-multipart @ file:///home/conda/feedstock_root/build_artifacts/python-multipart_1707760088566/work
 PyYAML==6.0.1
-rich==13.7.1
+realtime==1.0.6
+rich @ file:///home/conda/feedstock_root/build_artifacts/rich-split_1709150387247/work/dist
 ruff==0.5.1
-shellingham==1.5.4
-sniffio==1.3.1
-SQLAlchemy==2.0.31
-starlette==0.37.2
+shellingham @ file:///home/conda/feedstock_root/build_artifacts/shellingham_1698144360966/work
+six==1.16.0
+sniffio @ file:///home/conda/feedstock_root/build_artifacts/sniffio_1708952932303/work
+SQLAlchemy @ file:///home/conda/feedstock_root/build_artifacts/sqlalchemy_1718781174813/work
+starlette @ file:///home/conda/feedstock_root/build_artifacts/starlette-recipe_1709667058396/work
+storage3==0.7.7
+StrEnum==0.4.15
+supabase==2.6.0
+supafunc==0.5.1
 typer==0.12.3
-typing_extensions==4.12.2
-ujson==5.10.0
-uvicorn==0.30.1
+typer-slim==0.12.3
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1717802530399/work
+ujson @ file:///home/conda/feedstock_root/build_artifacts/ujson_1715783117998/work
+uvicorn @ file:///home/conda/feedstock_root/build_artifacts/uvicorn-split_1717404972705/work
 uvloop==0.19.0
 watchfiles==0.22.0
 websockets==12.0

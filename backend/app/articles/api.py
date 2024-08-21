@@ -3,13 +3,6 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 
-class ArticleCreate(BaseModel):
-    url: str
-    date_first_accessed: datetime | None = None
-    date_last_accessed: datetime | None = None
-    date_read: datetime | None = None
-
-
 class ArticleUpdateLastAccessed(BaseModel):
     url: str
     create_if_not_exist: bool = False
