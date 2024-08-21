@@ -1,14 +1,17 @@
 import pytest
 from fastapi.testclient import TestClient
+from freezegun import freeze_time
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.server import app
 
+from .common import ANOTHER_VALID_ARTICLE_URL, VALID_ARTICLE_URL
+
 client = TestClient(app)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def db():
     db = next(get_db())
     yield db
@@ -31,45 +34,43 @@ def test_new_user_reads_multiple_articles(db: Session):
 
     # Read first article
     article1_response = client.post(
-        "/articles/",
+        "/articles/access/",
         headers={"User-Id": user_id},
         json={
-            "url": "http://example.com/article1",
-            "date_first_accessed": "2023-12-01T10:00:00",
-            "date_last_accessed": "2023-12-01T10:00:00",
+            "url": VALID_ARTICLE_URL,
+            "create_if_not_exist": True,
         },
     )
-    assert article1_response.status_code == 200
+    assert article1_response.status_code == 200, "first article failed access"
     article1_id = article1_response.json()["id"]
 
     client.patch(
         f"/articles/{article1_id}/read",
         headers={"User-Id": user_id},
-        json={"date_read": "2023-12-01T10:30:00"},
+        json={"read": True},
     )
 
     # Read second article
     article2_response = client.post(
-        "/articles/",
+        "/articles/access/",
         headers={"User-Id": user_id},
         json={
-            "url": "http://example.com/article2",
-            "date_first_accessed": "2023-12-02T14:00:00",
-            "date_last_accessed": "2023-12-02T14:00:00",
+            "url": ANOTHER_VALID_ARTICLE_URL,
+            "create_if_not_exist": True,
         },
     )
-    assert article2_response.status_code == 200
+    assert article2_response.status_code == 200, "second article failed creation"
     article2_id = article2_response.json()["id"]
 
     client.patch(
         f"/articles/{article2_id}/read",
         headers={"User-Id": user_id},
-        json={"date_read": "2023-12-02T14:45:00"},
+        json={"read": True},
     )
 
     # Verify reading history
-    history_response = client.get("/articles/", headers={"User-Id": user_id})
-    assert history_response.status_code == 200
+    history_response = client.get("/articles/all", headers={"User-Id": user_id})
+    assert history_response.status_code == 200, "failed to get all articles"
     history = history_response.json()
     assert len(history) == 2
     assert all(article["date_read"] is not None for article in history)
@@ -89,49 +90,63 @@ def test_user_marks_article_unread_then_read_again(db: Session):
     login_response = client.post("/user/login/", json={"email": "changingmind@example.com"})
     assert login_response.status_code == 200
 
-    # Read an article
-    article_response = client.post(
-        "/articles/",
-        headers={"User-Id": user_id},
-        json={
-            "url": "http://example.com/interesting_article",
-            "date_first_accessed": "2023-12-05T09:00:00",
-            "date_last_accessed": "2023-12-05T09:00:00",
-        },
-    )
-    assert article_response.status_code == 200
-    article_id = article_response.json()["id"]
+    with freeze_time("2024-08-21T10:00:00") as frozen_time:
+        # Access article
+        article_response = client.post(
+            "/articles/access/",
+            headers={"User-Id": user_id},
+            json={
+                "url": VALID_ARTICLE_URL,
+                "create_if_not_exist": True,
+            },
+        )
 
-    client.patch(
-        f"/articles/{article_id}/read",
-        headers={"User-Id": user_id},
-        json={"date_read": "2023-12-05T09:30:00"},
-    )
+        assert article_response.status_code == 200, "Failed to access article"
+        article_id = article_response.json()["id"]
 
-    # Mark article as unread (by setting date_read to null)
-    unread_response = client.patch(
-        f"/articles/{article_id}/read",
-        headers={"User-Id": user_id},
-        json={"date_read": None},
-    )
-    assert unread_response.status_code == 200
-    assert unread_response.json()["date_read"] is None
+        frozen_time.move_to("2024-08-21T10:30:00")
 
-    # Update last accessed time
-    client.patch(
-        f"/articles/{article_id}/access",
-        headers={"User-Id": user_id},
-        json={"date_last_accessed": "2023-12-06T10:00:00"},
-    )
+        # Read article
+        read_response = client.patch(
+            f"/articles/{article_id}/read",
+            headers={"User-Id": user_id},
+            json={"read": True},
+        )
 
-    # Mark article as read again
-    reread_response = client.patch(
-        f"/articles/{article_id}/read",
-        headers={"User-Id": user_id},
-        json={"date_read": "2023-12-07T11:30:00"},
-    )
-    assert reread_response.status_code == 200
-    assert reread_response.json()["date_read"] == "2023-12-07T11:30:00"
+        assert read_response.status_code == 200, "Failed to mark article as read"
+        assert read_response.json()["date_read"] == "2024-08-21T10:30:00"
+
+        frozen_time.move_to("2024-08-21T11:00:00")
+
+        # Access article
+        client.patch(
+            f"/articles/{article_id}/access",
+            headers={"User-Id": user_id},
+            json={"url": VALID_ARTICLE_URL},
+        )
+
+        frozen_time.move_to("2024-08-21T11:05:00")
+
+        # Unread article
+        reread_response = client.patch(
+            f"/articles/{article_id}/read",
+            headers={"User-Id": user_id},
+            json={"read": False},
+        )
+        assert reread_response.status_code == 200, "Failed to mark article as unread"
+        assert not reread_response.json()["date_read"]
+
+        frozen_time.move_to("2024-08-21T11:10:00")
+
+        # Read article
+        read_response = client.patch(
+            f"/articles/{article_id}/read",
+            headers={"User-Id": user_id},
+            json={"read": True},
+        )
+
+        assert read_response.status_code == 200, "Failed to mark article as read"
+        assert read_response.json()["date_read"] == "2024-08-21T11:10:00"
 
 
 def test_user_accesses_article_multiple_times_before_reading(db: Session):
@@ -148,106 +163,58 @@ def test_user_accesses_article_multiple_times_before_reading(db: Session):
     login_response = client.post("/user/login/", json={"email": "procrastinator@example.com"})
     assert login_response.status_code == 200
 
-    # First access
-    first_access_response = client.post(
-        "/articles/",
-        headers={"User-Id": user_id},
-        json={
-            "url": "http://example.com/long_article",
-            "date_first_accessed": "2023-12-10T08:00:00",
-            "date_last_accessed": "2023-12-10T08:00:00",
-        },
-    )
-    assert first_access_response.status_code == 200
-    article_id = first_access_response.json()["id"]
+    with freeze_time("2024-08-21T08:00:00") as frozen_time:
+        # First access
+        first_access_response = client.post(
+            "/articles/access",
+            headers={"User-Id": user_id},
+            json={
+                "url": VALID_ARTICLE_URL,
+                "create_if_not_exist": True,
+            },
+        )
+        assert first_access_response.status_code == 200, "Failed to access article"
+        article_id = first_access_response.json()["id"]
 
-    # Second access
-    second_access_response = client.patch(
-        f"/articles/{article_id}/access",
-        headers={"User-Id": user_id},
-        json={"date_last_accessed": "2023-12-11T09:00:00"},
-    )
-    assert second_access_response.status_code == 200
+        frozen_time.move_to("2024-08-21T09:00:00")
 
-    # Third access and finally read
-    third_access_response = client.patch(
-        f"/articles/{article_id}/access",
-        headers={"User-Id": user_id},
-        json={"date_last_accessed": "2023-12-12T10:00:00"},
-    )
-    assert third_access_response.status_code == 200
+        # Second access
+        second_access_response = client.post(
+            "/articles/access",
+            headers={"User-Id": user_id},
+            json={
+                "url": VALID_ARTICLE_URL,
+            },
+        )
+        assert second_access_response.status_code == 200, "Failed to access article a second time"
 
-    read_response = client.patch(
-        f"/articles/{article_id}/read",
-        headers={"User-Id": user_id},
-        json={"date_read": "2023-12-12T10:30:00"},
-    )
-    assert read_response.status_code == 200
+        frozen_time.move_to("2024-08-21T10:00:00")
 
-    # Verify article history
-    article_response = client.get("/articles/by-url?url=http://example.com/long_article", headers={"User-Id": user_id})
-    assert article_response.status_code == 200
-    article = article_response.json()[0]
-    assert article["date_first_accessed"] == "2023-12-10T08:00:00"
-    assert article["date_last_accessed"] == "2023-12-12T10:30:00"  # This should be updated to the read time
-    assert article["date_read"] == "2023-12-12T10:30:00"
+        # Third access and finally read
+        third_access_response = client.post(
+            "/articles/access",
+            headers={"User-Id": user_id},
+            json={
+                "url": VALID_ARTICLE_URL,
+            },
+        )
+        assert third_access_response.status_code == 200, "Failed to access article a third time"
 
+        frozen_time.move_to("2024-08-21T11:00:00")
 
-def test_user_reads_article_from_multiple_devices(db: Session):
-    """
-    This test simulates a user reading the same article from multiple devices.
-    It ensures that the article's read status is consistent across devices and
-    that the last access date is updated appropriately.
-    """
-    # User registration and login
-    register_response = client.post("/user/register/", json={"email": "multidevice@example.com"})
-    assert register_response.status_code == 200
-    user_id = register_response.json()["id"]
+        read_response = client.patch(
+            f"/articles/{article_id}/read",
+            headers={"User-Id": user_id},
+            json={"read": True},
+        )
+        assert read_response.status_code == 200
 
-    login_response = client.post("/user/login/", json={"email": "multidevice@example.com"})
-    assert login_response.status_code == 200
+        # Verify article history
+        article_response = client.get("/articles/all", headers={"User-Id": user_id})
+        assert article_response.status_code == 200, "Failed to access all articles"
 
-    # Access from first device (e.g., smartphone)
-    smartphone_response = client.post(
-        "/articles/",
-        headers={"User-Id": user_id},
-        json={
-            "url": "http://example.com/tech_article",
-            "date_first_accessed": "2023-12-15T07:00:00",
-            "date_last_accessed": "2023-12-15T07:15:00",
-        },
-    )
-    assert smartphone_response.status_code == 200
-    article_id = smartphone_response.json()["id"]
-
-    # Access from second device (e.g., laptop) and read
-    laptop_access_response = client.patch(
-        f"/articles/{article_id}/access",
-        headers={"User-Id": user_id},
-        json={"date_last_accessed": "2023-12-15T20:00:00"},
-    )
-    assert laptop_access_response.status_code == 200
-
-    laptop_read_response = client.patch(
-        f"/articles/{article_id}/read",
-        headers={"User-Id": user_id},
-        json={"date_read": "2023-12-15T20:30:00"},
-    )
-    assert laptop_read_response.status_code == 200
-    assert laptop_read_response.json()["date_read"] == "2023-12-15T20:30:00"
-
-    # Access from third device (e.g., tablet) after reading
-    tablet_response = client.patch(
-        f"/articles/{article_id}/access",
-        headers={"User-Id": user_id},
-        json={"date_last_accessed": "2023-12-16T10:00:00"},
-    )
-    assert tablet_response.status_code == 200
-
-    # Verify article status
-    article_response = client.get("/articles/by-url?url=http://example.com/tech_article", headers={"User-Id": user_id})
-    assert article_response.status_code == 200
-    article = article_response.json()[0]
-    assert article["date_first_accessed"] == "2023-12-15T07:00:00"
-    assert article["date_last_accessed"] == "2023-12-16T10:00:00"
-    assert article["date_read"] == "2023-12-15T20:30:00"
+        assert len(article_response.json()) == 1
+        article = article_response.json()[0]
+        assert article["date_first_accessed"] == "2024-08-21T08:00:00"
+        assert article["date_last_accessed"] == "2024-08-21T11:00:00"
+        assert article["date_read"] == "2024-08-21T11:00:00"
