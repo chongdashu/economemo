@@ -86,7 +86,9 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:${{ github.sha }}
           no-cache: true
 
       - name: Deploy to EC2 and Verify FastAPI Server
