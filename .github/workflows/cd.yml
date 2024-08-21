@@ -120,20 +120,17 @@ jobs:
               docker system prune -af --volumes
             fi
 
-            # Pull the new image with explicit error handling
-            PULL_OUTPUT=$(docker pull ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest 2>&1)
-            
-            if echo "$PULL_OUTPUT" | grep -q "no space left on device"; then
-              echo "Error: No space left on device during Docker pull."
-              exit 1
-            fi
+            # Pull the latest image from Docker Hub
+            echo "Pulling the latest Docker image..."
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
 
             # Stop and remove the existing container if it exists
             docker stop economemo-backend || true
             docker rm economemo-backend || true
 
-            # Run the new container
-            docker run --pull always -d --name economemo-backend \
+            # Run the new container with the latest image
+            docker run -d --name economemo-backend \
+              --pull always \
               -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
               -v /etc/letsencrypt:/etc/letsencrypt:ro \
               -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
