@@ -78,6 +78,7 @@ jobs:
           context: ./backend
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
+          no-cache: true
 
       - name: Deploy to EC2 and Verify FastAPI Server
         env:
@@ -94,7 +95,7 @@ jobs:
           SSL_CERTFILE: ${{ secrets.SSL_CERTFILE }}
           CHROME_EXTENSION_IDS: ${{ secrets.CHROME_EXTENSION_IDS }}
           DOMAIN: ${{ secrets.DOMAIN }}
-      
+
         run: |
           set -e  # Exit immediately if any command fails
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
@@ -107,7 +108,7 @@ jobs:
               echo "Low disk space. Cleaning up old Docker images and containers..."
               docker system prune -af --volumes
             fi
-      
+
             # Pull the new image with explicit error handling
             PULL_OUTPUT=$(docker pull ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest 2>&1)
             
@@ -115,11 +116,11 @@ jobs:
               echo "Error: No space left on device during Docker pull."
               exit 1
             fi
-      
+
             # Stop and remove the existing container if it exists
             docker stop economemo-backend || true
             docker rm economemo-backend || true
-      
+
             # Run the new container
             docker run -d --name economemo-backend \
               -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
@@ -135,10 +136,10 @@ jobs:
               -e CHROME_EXTENSION_IDS="${{ secrets.CHROME_EXTENSION_IDS }}" \
               -e DOMAIN="${{ secrets.DOMAIN }}" \
               ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
-      
+
             echo "Waiting for FastAPI server to start..."
             sleep 30
-      
+
             if curl -sSf -k https://localhost:${{ secrets.PORT }}/health > /dev/null 2>&1; then
               echo "FastAPI server is up and running with HTTPS!"
             else
@@ -148,7 +149,6 @@ jobs:
             fi
           '
           rm private_key
-        
 
       - name: Verify External Accessibility
         run: |
