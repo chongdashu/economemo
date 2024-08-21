@@ -88,7 +88,6 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:${{ github.sha }}
           no-cache: true
 
       - name: Deploy to EC2 and Verify FastAPI Server
@@ -136,20 +135,20 @@ jobs:
             docker rm economemo-backend || true
 
             # Run the new container
-            docker run --pull always -d --name economemo-backend \
-              -p $PORT:$PORT \
+            docker run -d --name economemo-backend \
+              -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
               -v /etc/letsencrypt:/etc/letsencrypt:ro \
-              -e POSTGRES_USER="$POSTGRES_USER" \
-              -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
-              -e POSTGRES_DB="$POSTGRES_DB" \
-              -e POSTGRES_HOST="$POSTGRES_HOST" \
-              -e POSTGRES_PORT="$POSTGRES_PORT" \
-              -e PORT="$PORT" \
-              -e SSL_KEYFILE="$SSL_KEYFILE" \
-              -e SSL_CERTFILE="$SSL_CERTFILE" \
-              -e CHROME_EXTENSION_IDS="$CHROME_EXTENSION_IDS" \
-              -e DOMAIN="$DOMAIN" \
-              $DOCKERHUB_USERNAME/economemo-backend:latest
+              -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
+              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
+              -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
+              -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
+              -e POSTGRES_PORT="${{ secrets.POSTGRES_PORT }}" \
+              -e PORT="${{ secrets.PORT }}" \
+              -e SSL_KEYFILE="${{ secrets.SSL_KEYFILE }}" \
+              -e SSL_CERTFILE="${{ secrets.SSL_CERTFILE }}" \
+              -e CHROME_EXTENSION_IDS="${{ secrets.CHROME_EXTENSION_IDS }}" \
+              -e DOMAIN="${{ secrets.DOMAIN }}" \
+              ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
 
             echo "Waiting for FastAPI server to start..."
             sleep 30
