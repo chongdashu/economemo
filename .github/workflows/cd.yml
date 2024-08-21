@@ -113,47 +113,44 @@ jobs:
           set -e  # Exit immediately if any command fails
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
           ssh -i private_key -o StrictHostKeyChecking=no ${USER}@${HOST} '
+            echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
             # Check available disk space in MB
             AVAILABLE_SPACE=$(df / | awk '"'"'NR==2 {print $4}'"'"')
-            
+
             # If available space is less than 5GB (5000000KB)
             if [ $AVAILABLE_SPACE -lt 5000000 ]; then
               echo "Low disk space. Cleaning up old Docker images and containers..."
               docker system prune -af --volumes
             fi
 
-            # Login to Docker Hub
-            echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-
-            # Pull the latest image from Docker Hub
-            echo "Pulling the latest Docker image..."
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
+            # Pull the new image
+            docker pull $DOCKERHUB_USERNAME/economemo-backend:latest
 
             # Stop and remove the existing container if it exists
             docker stop economemo-backend || true
             docker rm economemo-backend || true
 
-            # Run the new container with the latest image
-            docker run -d --name economemo-backend \
-              --pull always \
-              -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
+            # Run the new container
+            docker run --pull always -d --name economemo-backend \
+              -p $PORT:$PORT \
               -v /etc/letsencrypt:/etc/letsencrypt:ro \
-              -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
-              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
-              -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
-              -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
-              -e POSTGRES_PORT="${{ secrets.POSTGRES_PORT }}" \
-              -e PORT="${{ secrets.PORT }}" \
-              -e SSL_KEYFILE="${{ secrets.SSL_KEYFILE }}" \
-              -e SSL_CERTFILE="${{ secrets.SSL_CERTFILE }}" \
-              -e CHROME_EXTENSION_IDS="${{ secrets.CHROME_EXTENSION_IDS }}" \
-              -e DOMAIN="${{ secrets.DOMAIN }}" \
-              ${{ secrets.DOCKERHUB_USERNAME }}/economemo-backend:latest
+              -e POSTGRES_USER="$POSTGRES_USER" \
+              -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+              -e POSTGRES_DB="$POSTGRES_DB" \
+              -e POSTGRES_HOST="$POSTGRES_HOST" \
+              -e POSTGRES_PORT="$POSTGRES_PORT" \
+              -e PORT="$PORT" \
+              -e SSL_KEYFILE="$SSL_KEYFILE" \
+              -e SSL_CERTFILE="$SSL_CERTFILE" \
+              -e CHROME_EXTENSION_IDS="$CHROME_EXTENSION_IDS" \
+              -e DOMAIN="$DOMAIN" \
+              $DOCKERHUB_USERNAME/economemo-backend:latest
 
             echo "Waiting for FastAPI server to start..."
             sleep 30
 
-            if curl -sSf -k https://localhost:${{ secrets.PORT }}/health > /dev/null 2>&1; then
+            if curl -sSf -k https://localhost:$PORT/health > /dev/null 2>&1; then
               echo "FastAPI server is up and running with HTTPS!"
             else
               echo "Failed to verify server status"
@@ -161,6 +158,7 @@ jobs:
               exit 1
             fi
           '
+
           rm private_key
 
       - name: Verify External Accessibility
