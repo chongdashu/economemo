@@ -1,12 +1,14 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
+
+
+class StreakDay(BaseModel):
+    day: str
+    date: datetime
+    read_count: int
 
 
 class StreakResponse(BaseModel):
     current_streak: int
-    longest_streak: int
-    last_read_date: datetime | None
-    streak_days: str
-
-    model_config = ConfigDict(from_attributes=True)
+    streaks: list[StreakDay]

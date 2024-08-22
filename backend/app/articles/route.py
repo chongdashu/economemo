@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from app.config import Config
 from app.db import get_db
 from app.models import Article
-from app.streak.db import update_streak
 
 from .api import ArticleMarkRead, ArticleResponse, ArticleUpdateLastAccessed
 
@@ -32,9 +31,6 @@ def update_article_date_read(
 
     db_article.date_read = now if article_update.read else None
     db_article.date_last_accessed = now
-
-    if article_update.read:
-        update_streak(db, user_id)
 
     db.commit()
     db.refresh(db_article)

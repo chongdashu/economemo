@@ -202,59 +202,58 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ---------------------------------------------------------------------------------
   async function updateStreakDisplay() {
     try {
-      const headers = await getAuthHeaders();
-      if (!headers["User-Id"]) {
-        return;
-      }
-
       const response = await fetch(`${config.apiUrl}/streak`, {
-        headers: headers,
+        headers: await getAuthHeaders(),
       });
 
       if (!response.ok) {
         throw new Error("Failed to fetch streak data");
       }
 
-      const streakData = await response.json();
-      const streakElement = document.getElementById("streak-display");
+      const data = await response.json();
+      console.log("Streak data:", data);
+      const { current_streak, streaks } = data;
 
-      console.log("streakData=%o", streakData);
+      const streakDisplayElement = document.getElementById("streak-display");
 
-      if (streakElement) {
-        const days = ["M", "T", "W", "T", "F", "S", "S"];
-        const today = new Date().getDay();
-        const orderedDays = [...days.slice(today), ...days.slice(0, today)];
+      // Update current streak
+      streakDisplayElement.textContent = `${current_streak} day streak!`;
 
-        streakElement.innerHTML = `
-          <div class="text-lg font-bold">${
-            streakData.current_streak
-          } day streak!</div>
-          <div class="flex justify-between mt-2">
-            ${orderedDays
-              .map(
-                (day, index) => `
-              <div class="flex flex-col items-center">
-                <div class="w-6 h-6 rounded-full flex items-center justify-center ${
-                  streakData.streak_days[(index + today) % 7] === "1"
-                    ? "bg-red-400 text-white"
-                    : "bg-gray-200"
-                }">
-                  ${
-                    streakData.streak_days[(index + today) % 7] === "1"
-                      ? "✓"
-                      : ""
-                  }
-                </div>
-                <div class="text-xs mt-1">${day}</div>
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-        `;
+      // Create streak circles
+      const streakCircles = streaks.map((streak) => {
+        const circle = document.createElement("div");
+        circle.className = "inline-block w-6 h-6 rounded-full mx-1";
+        circle.title = `${streak.date}: ${streak.read_count} articles read`;
+
+        if (streak.read_count > 0) {
+          circle.classList.add("bg-green-500");
+        } else {
+          circle.classList.add("bg-gray-300");
+        }
+
+        const dayLabel = document.createElement("div");
+        dayLabel.className = "text-xs text-center mt-1";
+        dayLabel.textContent = streak.day;
+
+        const container = document.createElement("div");
+        container.className = "inline-block text-center";
+        container.appendChild(circle);
+        container.appendChild(dayLabel);
+
+        return container;
+      });
+
+      // Clear existing streak display and add new circles
+      while (streakDisplayElement.firstChild) {
+        streakDisplayElement.removeChild(streakDisplayElement.firstChild);
       }
+      streakCircles.forEach((circle) =>
+        streakDisplayElement.appendChild(circle)
+      );
     } catch (error) {
       console.error("Error updating streak display:", error);
+      const streakDisplayElement = document.getElementById("streak-display");
+      streakDisplayElement.textContent = "Unable to load streak data";
     }
   }
 
