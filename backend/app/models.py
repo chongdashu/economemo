@@ -14,6 +14,7 @@ class User(Base):
 
     # Relationships
     articles: Mapped[list["Article"]] = relationship("Article", back_populates="user")
+    streak: Mapped["Streak"] = relationship("Streak", uselist=False, back_populates="user")
 
 
 class Article(Base):
@@ -30,3 +31,16 @@ class Article(Base):
 
     # Constraints
     __table_args__ = (UniqueConstraint("url", "user_id", name="_url_user_uc"),)
+
+
+class Streak(Base):
+    __tablename__ = "streaks"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"), unique=True)
+    current_streak: Mapped[int] = mapped_column(Integer, default=0)
+    longest_streak: Mapped[int] = mapped_column(Integer, default=0)
+    last_read_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    streak_days: Mapped[str] = mapped_column(String, default="0000000")  # Represents last 7 days
+
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="streak")

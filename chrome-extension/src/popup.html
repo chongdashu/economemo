@@ -1,34 +1,45 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Economemo</title>
     <style>
-        body {
-            width: 300px;
-            padding: 10px;
-            font-family: Arial, sans-serif;
-        }
-        button {
-            margin-top: 10px;
-        }
+      body {
+        width: 300px;
+        padding: 10px;
+        font-family: Arial, sans-serif;
+      }
+      button {
+        margin-top: 10px;
+      }
     </style>
-</head>
-<body>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
     <h1>Economemo</h1>
     <div id="status"></div>
+    <div id="streak-display" class="mb-4"></div>
     <form id="email-form">
-        <input type="email" id="email-input" placeholder="Enter your email" required>
-        <button id="register-button">Register</button>
-        <button id="login-button">Login</button>
+      <input
+        type="email"
+        id="email-input"
+        placeholder="Enter your email"
+        required
+      />
+      <button id="register-button">Register</button>
+      <button id="login-button">Login</button>
     </form>
-    <button id="logout-button" style="display: none;">Logout</button>
+    <button id="logout-button" style="display: none">Logout</button>
     <div id="article-status"></div>
-    <button id="action-button" style="display: none;"></button>
+    <button id="action-button" style="display: none"></button>
     <div id="error-message"></div>
+    <!-- Scripts -->
     <script src="config.js"></script>
     <script type="module" src="constants.js"></script>
-    <script  type="module" src="api.js"></script>
-    <script  type="module" src="auth.js"></script>
+    <script type="module" src="api.js"></script>
+    <script type="module" src="auth.js"></script>
     <script type="module" src="popup.js"></script>
-</body>
+  </body>
 </html>
