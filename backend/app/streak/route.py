@@ -45,7 +45,9 @@ def get_streak(user_id: str = Header(None, alias="User-Id"), db: Session = Depen
     for streak in reversed(streaks):
         if streak.read_count > 0:
             current_streak += 1
-        else:
+        elif current_streak > 0:
+            # Stop counting if we've started a streak and hit a day with no reads
             break
+        # If we haven't started a streak yet, continue looking back
 
     return StreakResponse(current_streak=current_streak, streaks=streaks)

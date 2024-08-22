@@ -21,6 +21,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     statusElement.textContent = `Logged in as ${userEmail}`;
     emailForm.style.display = "none";
     logoutButton.style.display = "block";
+    // Show streak
+    const streakDisplayElement = document.getElementById("streak-display");
+    const streakCirclesElement = document.getElementById("streak-circles");
+    if (streakDisplayElement) streakDisplayElement.style.display = "block";
+    if (streakCirclesElement) streakCirclesElement.style.display = "flex";
   }
 
   function setLoggedOutState() {
@@ -30,6 +35,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     logoutButton.style.display = "none";
     articleStatusElement.textContent = "";
     actionButton.style.display = "none";
+    // Hide streak
+    const streakDisplayElement = document.getElementById("streak-display");
+    const streakCirclesElement = document.getElementById("streak-circles");
+    if (streakDisplayElement) streakDisplayElement.style.display = "none";
+    if (streakCirclesElement) streakCirclesElement.style.display = "none";
   }
 
   // Function to update login status
@@ -48,6 +58,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       setLoggedInState(userEmail);
       // Check article status after login
       checkCurrentTabArticleStatus();
+      // Update streak display after login
+      updateStreakDisplay();
     });
   }
 
@@ -126,6 +138,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
         }
       });
+      updateStreakDisplay();
     } catch (error) {
       console.error("Error updating read status:", error);
       errorMessageElement.textContent = `Error: ${error.message}`;
@@ -215,41 +228,37 @@ document.addEventListener("DOMContentLoaded", async () => {
       const { current_streak, streaks } = data;
 
       const streakDisplayElement = document.getElementById("streak-display");
+      const streakCirclesElement = document.getElementById("streak-circles");
 
       // Update current streak
-      streakDisplayElement.textContent = `${current_streak} day streak!`;
+      streakDisplayElement.textContent = `${current_streak} day${
+        current_streak !== 1 ? "s" : ""
+      }`;
+
+      // Clear existing streak display
+      streakCirclesElement.innerHTML = "";
 
       // Create streak circles
-      const streakCircles = streaks.map((streak) => {
-        const circle = document.createElement("div");
-        circle.className = "inline-block w-6 h-6 rounded-full mx-1";
-        circle.title = `${streak.date}: ${streak.read_count} articles read`;
+      streaks.forEach((streak) => {
+        const streakDay = document.createElement("div");
+        streakDay.className = "streak-day";
 
-        if (streak.read_count > 0) {
-          circle.classList.add("bg-green-500");
-        } else {
-          circle.classList.add("bg-gray-300");
-        }
+        const circle = document.createElement("div");
+        circle.className = "streak-circle";
+        circle.style.backgroundColor =
+          streak.read_count > 0 ? "#10B981" : "#D1D5DB"; // green-500 or gray-300
+        circle.title = `${streak.date}: ${streak.read_count} article${
+          streak.read_count !== 1 ? "s" : ""
+        } read`;
 
         const dayLabel = document.createElement("div");
-        dayLabel.className = "text-xs text-center mt-1";
+        dayLabel.className = "day-label";
         dayLabel.textContent = streak.day;
 
-        const container = document.createElement("div");
-        container.className = "inline-block text-center";
-        container.appendChild(circle);
-        container.appendChild(dayLabel);
-
-        return container;
+        streakDay.appendChild(circle);
+        streakDay.appendChild(dayLabel);
+        streakCirclesElement.appendChild(streakDay);
       });
-
-      // Clear existing streak display and add new circles
-      while (streakDisplayElement.firstChild) {
-        streakDisplayElement.removeChild(streakDisplayElement.firstChild);
-      }
-      streakCircles.forEach((circle) =>
-        streakDisplayElement.appendChild(circle)
-      );
     } catch (error) {
       console.error("Error updating streak display:", error);
       const streakDisplayElement = document.getElementById("streak-display");

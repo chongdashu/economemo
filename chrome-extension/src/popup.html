@@ -8,15 +8,31 @@
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet"
     />
+    <style>
+      .streak-circle {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .streak-day {
+        display: inline-block;
+        text-align: center;
+        margin: 0 2px;
+      }
+      .day-label {
+        font-size: 10px;
+        color: #4b5563;
+        margin-top: 2px;
+      }
+    </style>
   </head>
   <body class="bg-gray-100 p-6 w-80">
     <div class="bg-white rounded-lg shadow-md p-6">
       <h1 class="text-2xl font-bold text-blue-600 mb-4">NewsAnchor.xyz</h1>
       <div id="status" class="text-sm text-gray-600 mb-2"></div>
-      <div
-        id="streak-display"
-        class="mb-4 text-sm font-semibold text-green-600"
-      ></div>
+      <div id="streak-display" class="mb-2 text-sm font-semibold text-green-600"></div>
+      <div id="streak-circles" class="flex justify-between mb-4"></div>
 
       <form id="email-form" class="mb-4">
         <input
