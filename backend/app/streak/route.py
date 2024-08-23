@@ -1,4 +1,5 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
+from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy import Date, cast, func
@@ -9,6 +10,12 @@ from app.models import Article
 from app.streak.api import StreakDay, StreakResponse
 
 router = APIRouter()
+
+
+def safe_int_cast(value: Any) -> int:
+    if callable(value):
+        return int(value())
+    return int(value)
 
 
 @router.get("/streak", response_model=StreakResponse)
@@ -30,15 +37,15 @@ def get_streak(user_id: str = Header(None, alias="User-Id"), db: Session = Depen
     )
 
     # Create a dictionary of date to read count
-    read_count_dict = {rc.date: rc.count for rc in read_counts}
+    read_count_dict: dict[date, int] = {rc.date: safe_int_cast(rc.count) for rc in read_counts}
 
     # Generate the streaks array
     streaks = []
     for i in range(7):
-        date = today - timedelta(days=6 - i)
-        day = date.strftime("%a")[:2]
-        read_count = read_count_dict.get(date, 0)
-        streaks.append(StreakDay(day=day, date=date, read_count=read_count))
+        d = today - timedelta(days=6 - i)
+        day = d.strftime("%a")[:2]
+        read_count = read_count_dict.get(d, 0)
+        streaks.append(StreakDay(day=day, date=datetime.combine(d, datetime.min.time()), read_count=read_count))
 
     # Calculate current streak
     current_streak = 0

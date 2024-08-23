@@ -1,3 +1,5 @@
+from typing import Generator
+
 import pytest
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
@@ -13,7 +15,7 @@ client = TestClient(app)
 
 
 @pytest.fixture(scope="function")
-def test_user():
+def test_user() -> Generator[User, None, None]:
     db: Session = next(get_db())
     user = User(id="test-uuid")
     db.add(user)
