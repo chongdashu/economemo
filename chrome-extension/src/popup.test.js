@@ -8,24 +8,27 @@ describe("Popup", () => {
     document.body.innerHTML = html;
   });
 
-  test("login button exists and has correct text", () => {
+  test("renders main heading", () => {
+    const heading = document.querySelector("h1");
+    expect(heading).not.toBeNull();
+    expect(heading.textContent).toBe("NewsAnchor.xyz");
+  });
+
+  test("renders login and register buttons with correct text", () => {
     const loginButton = document.querySelector("#login-button");
-    expect(loginButton).not.toBeNull();
-    expect(loginButton.textContent).toBe("Login");
-  });
-
-  test("register button exists and has correct text", () => {
     const registerButton = document.querySelector("#register-button");
+    expect(loginButton).not.toBeNull();
+    expect(loginButton.textContent.trim()).toBe("Login");
     expect(registerButton).not.toBeNull();
-    expect(registerButton.textContent).toBe("Register");
+    expect(registerButton.textContent.trim()).toBe("Register");
   });
 
-  test("email input field exists", () => {
+  test("renders email input field with correct attributes", () => {
     const emailInput = document.querySelector("#email-input");
     expect(emailInput).not.toBeNull();
     expect(emailInput.type).toBe("email");
-    expect(emailInput.placeholder).toBe("Enter your email");
     expect(emailInput.required).toBe(true);
+    expect(emailInput.placeholder).toBe("Enter your email");
   });
 
   test("logout button is initially hidden", () => {
@@ -40,5 +43,15 @@ describe("Popup", () => {
     expect(actionButton.style.display).toBe("none");
   });
 
-  // Add more tests as needed
+  test("renders streak display elements", () => {
+    const streakDisplay = document.querySelector("#streak-display");
+    const streakCircles = document.querySelector("#streak-circles");
+    expect(streakDisplay).not.toBeNull();
+    expect(streakCircles).not.toBeNull();
+  });
+
+  test("renders error message container", () => {
+    const errorMessage = document.querySelector("#error-message");
+    expect(errorMessage).not.toBeNull();
+  });
 });
